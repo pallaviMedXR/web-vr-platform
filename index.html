@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Anatomy 3D Viewer</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+        
+<script>
+    
+AFRAME.registerComponent('center-model', {
+    init: function () {
+        this.el.addEventListener('model-loaded', () => {
+            const model = this.el.getObject3D('mesh');
+
+            if (!model) return;
+
+            const box = new THREE.Box3().setFromObject(model);
+            const center = new THREE.Vector3();
+            box.getCenter(center);
+
+            const localCenter = this.el.object3D
+                .worldToLocal(center.clone());
+
+            model.position.sub(localCenter);
+        });
+    }
+});
+</script>
+
+<script>
+AFRAME.registerComponent('drag-rotate', {
+    init: function () {
+        let dragging = false;
+        let previousX = 0;
+        let previousY = 0;
+
+        const model = this.el.object3D;
+        const models = Array.from(
+            document.querySelectorAll('[drag-rotate]')
+        );
+        const modelIndex = models.indexOf(this.el);
+
+        this.onDown = (event) => {
+            const isLeft = event.clientX < window.innerWidth / 2;
+
+            if ((modelIndex === 0 && isLeft) ||
+                (modelIndex === 1 && !isLeft)) {
+                dragging = true;
+                previousX = event.clientX;
+                previousY = event.clientY;
+            }
+        };
+
+        this.onMove = (event) => {
+            if (!dragging) return;
+
+            model.rotation.y +=
+                (event.clientX - previousX) * 0.01;
+
+            model.rotation.x +=
+                (event.clientY - previousY) * 0.01;
+
+            previousX = event.clientX;
+            previousY = event.clientY;
+        };
+
+        this.onUp = () => {
+            dragging = false;
+        };
+
+        window.addEventListener('pointerdown', this.onDown);
+        window.addEventListener('pointermove', this.onMove);
+        window.addEventListener('pointerup', this.onUp);
+    },
+
+    remove: function () {
+        window.removeEventListener('pointerdown', this.onDown);
+        window.removeEventListener('pointermove', this.onMove);
+        window.removeEventListener('pointerup', this.onUp);
+    }
+});
+</script>
+
+
+
+<script>
+AFRAME.registerComponent('zoom-model', {
+    init: function () {
+        const model = this.el.object3D;
+
+        this.onWheel = (event) => {
+            const models = Array.from(
+                document.querySelectorAll('[zoom-model]')
+            );
+
+            const modelIndex = models.indexOf(this.el);
+            const isLeft = event.clientX < window.innerWidth / 2;
+
+            const isSelected =
+                (modelIndex === 0 && isLeft) ||
+                (modelIndex === 1 && !isLeft);
+
+            if (!isSelected) return;
+
+            event.preventDefault();
+
+            const zoomFactor =
+                event.deltaY > 0 ? 0.9 : 1.1;
+
+            const newScale = model.scale.x * zoomFactor;
+
+            if (newScale >= 0.5 && newScale <= 3) {
+                model.scale.set(
+                    newScale,
+                    newScale,
+                    newScale
+                );
+            }
+        };
+
+        window.addEventListener('wheel', this.onWheel, {
+            passive: false
+        });
+    },
+
+    remove: function () {
+        window.removeEventListener('wheel', this.onWheel);
+    }
+});
+</script>
+
+
+</head>
+<body>
+    
+<div style="
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    background: #1e293b;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    pointer-events: none;
+    white-space: nowrap;
+">
+    🖱️ Click + Drag to Rotate
+    &nbsp;&nbsp; | &nbsp;&nbsp;
+    Scroll to Zoom
+</div>
+
+    
+<div style="
+   
+position: fixed;
+top: 15px;
+left: 50%;
+transform: translateX(-50%);
+text-align: center;
+z-index: 100;
+
+    color: white;
+    font-family: Arial, sans-serif;
+    pointer-events: none;
+">
+    <h1 style="
+        margin: 0;
+        font-size: 28px;
+        font-weight: 600;
+    ">
+        Interactive 3D Anatomy Atlas
+    </h1>
+
+    <p style="
+        margin-top: 8px;
+        font-size: 14px;
+        color: #94a3b8;
+    ">
+        Explore, rotate and examine anatomical structures in 3D
+    </p>
+</div>
+
+<div style="
+    position: fixed;
+    top: 125px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    z-index: 100;
+    pointer-events: none;
+    font-family: Arial, sans-serif;
+    color: white;
+    text-align: center;
+">
+    <div style="width: 50%;">
+        <h2 style="font-size: 20px;">
+            Ear Model 1
+        </h2>
+    </div>
+
+    <div style="width: 50%;">
+        <h2 style="font-size: 20px;">
+            Ear Model 2
+        </h2>
+    </div>
+</div>
+
+<!-- Divider between the two ear models -->
+<div style="
+    position: fixed;
+    top: 175px;
+    bottom: 90px;
+    left: 50%;
+    width: 1px;
+    background: rgba(255, 255, 255, 0.18);
+    z-index: 50;
+    pointer-events: none;
+"></div>
+
+    <a-scene>   
+
+<!-- EAR MODEL 1 - LEFT -->
+<a-entity
+    drag-rotate
+    zoom-model
+    position="-1.5 3 -3">
+
+    <a-entity
+        gltf-model="url(ear-model-1.glb)"
+        scale="10 10 10"
+        center-model>
+    </a-entity>
+
+</a-entity>
+
+<!-- EAR MODEL 2 - RIGHT -->
+<a-entity
+drag-rotate
+    zoom-model
+    position="1.5 3 -3">
+
+    <a-entity
+        gltf-model="url(ear-model-2.glb)"
+        scale="1 1 1"
+        center-model>
+    </a-entity>
+
+</a-entity>
+
+
+
+</a-entity>
+        <a-sky color="#101827"></a-sky>
+        
+<a-entity position="0 1.6 0">
+    <a-camera look-controls="enabled: false"
+              wasd-controls="enabled: false">
+    </a-camera>
+</a-entity>
+    </a-scene>
+    
+<button id="resetButton"
+    style="
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        padding: 12px 24px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        cursor: pointer;
+        z-index: 100;
+    ">
+    Reset View
+</button>
+
+
+<script>
+document.getElementById('resetButton').addEventListener('click', function () {
+
+    const models = document.querySelectorAll('[drag-rotate]');
+
+    models.forEach(function(model) {
+        model.object3D.rotation.set(0, 0, 0);
+        model.object3D.scale.set(1, 1, 1);
+    });
+
+});
+</script>
+
+
+</body>
+</html>
