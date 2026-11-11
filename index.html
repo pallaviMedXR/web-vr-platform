@@ -27,6 +27,7 @@ AFRAME.registerComponent('center-model', {
 });
 </script>
 
+
 <script>
 AFRAME.registerComponent('drag-rotate', {
     init: function () {
@@ -35,16 +36,26 @@ AFRAME.registerComponent('drag-rotate', {
         let previousY = 0;
 
         const model = this.el.object3D;
+        const worldX = new THREE.Vector3(1, 0, 0);
+        const worldY = new THREE.Vector3(0, 1, 0);
+
+        const qx = new THREE.Quaternion();
+        const qy = new THREE.Quaternion();
+        const rotationSpeed = 0.01;
+
         const models = Array.from(
             document.querySelectorAll('[drag-rotate]')
         );
+
         const modelIndex = models.indexOf(this.el);
 
         this.onDown = (event) => {
-            const isLeft = event.clientX < window.innerWidth / 2;
+            const isLeft =
+                event.clientX < window.innerWidth / 2;
 
             if ((modelIndex === 0 && isLeft) ||
                 (modelIndex === 1 && !isLeft)) {
+
                 dragging = true;
                 previousX = event.clientX;
                 previousY = event.clientY;
@@ -54,11 +65,36 @@ AFRAME.registerComponent('drag-rotate', {
         this.onMove = (event) => {
             if (!dragging) return;
 
-            model.rotation.y +=
-                (event.clientX - previousX) * 0.01;
+            const deltaX = event.clientX - previousX;
+            const deltaY = event.clientY - previousY;
 
-            model.rotation.x +=
-                (event.clientY - previousY) * 0.01;
+           
+const camera = this.el.sceneEl.camera;
+
+if (!camera) return;
+
+const cameraRight = new THREE.Vector3(1, 0, 0);
+const cameraUp = new THREE.Vector3(0, 1, 0);
+
+cameraRight.applyQuaternion(camera.quaternion).normalize();
+cameraUp.applyQuaternion(camera.quaternion).normalize();
+
+qx.setFromAxisAngle(
+    cameraRight,
+    deltaY * rotationSpeed
+);
+
+qy.setFromAxisAngle(
+    cameraUp,
+    deltaX * rotationSpeed
+);
+
+
+            // Apply rotations around fixed website axes
+            model.quaternion.premultiply(qx);
+            model.quaternion.premultiply(qy);
+
+            model.quaternion.normalize();
 
             previousX = event.clientX;
             previousY = event.clientY;
@@ -68,18 +104,35 @@ AFRAME.registerComponent('drag-rotate', {
             dragging = false;
         };
 
-        window.addEventListener('pointerdown', this.onDown);
-        window.addEventListener('pointermove', this.onMove);
-        window.addEventListener('pointerup', this.onUp);
+        window.addEventListener(
+            'pointerdown', this.onDown
+        );
+
+        window.addEventListener(
+            'pointermove', this.onMove
+        );
+
+        window.addEventListener(
+            'pointerup', this.onUp
+        );
     },
 
     remove: function () {
-        window.removeEventListener('pointerdown', this.onDown);
-        window.removeEventListener('pointermove', this.onMove);
-        window.removeEventListener('pointerup', this.onUp);
+        window.removeEventListener(
+            'pointerdown', this.onDown
+        );
+
+        window.removeEventListener(
+            'pointermove', this.onMove
+        );
+
+        window.removeEventListener(
+            'pointerup', this.onUp
+        );
     }
 });
 </script>
+
 
 
 
@@ -198,13 +251,13 @@ z-index: 100;
 ">
     <div style="width: 50%;">
         <h2 style="font-size: 20px;">
-            Ear Model 1
+             Temporal Bone — External View
         </h2>
     </div>
 
     <div style="width: 50%;">
         <h2 style="font-size: 20px;">
-            Ear Model 2
+            Temporal Bone — Internal View
         </h2>
     </div>
 </div>
@@ -229,11 +282,26 @@ z-index: 100;
     zoom-model
     position="-1.5 3 -3">
 
-    <a-entity
-        gltf-model="url(ear_model_1_cleaned.glb)"
-        scale="10 10 10"
-        center-model>
-    </a-entity>
+    
+<a-entity
+    gltf-model="url(ear_model_1_cleaned.glb)"
+    scale="10 10 10"
+    center-model>
+</a-entity>
+
+<!-- Temporary test marker -->
+
+<a-sphere
+    id="cranialSurfaceMarker"
+    class="anatomy-label"
+    data-label="Exposed Cranial Surface"
+    position="0 0 0.5"
+    radius="0.04
+     color="#38bdf8"
+    visible="false">
+</a-sphere>
+
+
 
 </a-entity>
 
@@ -257,9 +325,18 @@ drag-rotate
         <a-sky color="#101827"></a-sky>
         
 <a-entity position="0 1.6 0">
-    <a-camera look-controls="enabled: false"
-              wasd-controls="enabled: false">
-    </a-camera>
+   
+<a-camera
+    look-controls="enabled: false"
+    wasd-controls="enabled: false">
+
+    <a-entity
+        cursor="rayOrigin: mouse"
+        raycaster="objects: .anatomy-label">
+    </a-entity>
+
+</a-camera>
+
 </a-entity>
     </a-scene>
     
@@ -280,6 +357,22 @@ drag-rotate
     Reset View
 </button>
 
+<button id="toggleLabelsBtn" style="
+    position: fixed;
+    bottom: 30px;
+    left: 180px;
+    padding: 12px 20px;
+    background: #334155;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 200;
+">
+    Show Labels
+</button>
+
 
 <script>
 document.getElementById('resetButton').addEventListener('click', function () {
@@ -292,6 +385,227 @@ document.getElementById('resetButton').addEventListener('click', function () {
     });
 
 });
+</script>
+
+<!-- Anatomy Information Panel -->
+<div style="
+    position: fixed;
+    top: 190px;
+    right: 20px;
+    width: 250px;
+    background: #1e293b;
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    font-family: Arial, sans-serif;
+    z-index: 100;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+">
+
+    <h3 style="margin-top: 0; color: #93c5fd;">
+        Anatomy Information
+    </h3>
+
+    
+<div style="
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+">
+    <button id="model1Btn" style="
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+    ">
+        External View
+    </button>
+
+    <button id="model2Btn" style="
+        background: #334155;
+        color: white;
+        border: none;
+        padding: 10px;
+        border-radius: 6px;
+        cursor: pointer;
+    ">
+        Internal View
+    </button>
+</div>
+
+<h4 id="modelInfoTitle">Temporal Bone — External View</h4>
+
+<p id="modelDescription" style="
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cbd5e1;
+">
+    Explore the external morphology, bony landmarks
+and associated anatomical structures of the temporal bone. Rotate and zoom to examine the specimen in detail.
+</p>
+</div>
+
+
+  
+<script>
+const model1Btn = document.getElementById('model1Btn');
+const model2Btn = document.getElementById('model2Btn');
+const modelInfoTitle = document.getElementById('modelInfoTitle');
+const modelDescription = document.getElementById('modelDescription');
+
+model1Btn.addEventListener('click', function () {
+    modelInfoTitle.textContent = 'Temporal Bone — External View';
+
+    modelDescription.textContent =
+    'Explore the external morphology, bony landmarks and associated anatomical structures of the temporal bone. Rotate and zoom to examine the specimen in detail.';
+
+    model1Btn.style.background = '#2563eb';
+    model2Btn.style.background = '#334155';
+});
+
+model2Btn.addEventListener('click', function () {
+    modelInfoTitle.textContent = 'Temporal Bone — Internal View';
+
+    modelDescription.textContent =
+    'Examine the exposed internal anatomy of the temporal bone, including its structural features and anatomical relationships. Rotate and zoom to explore the specimen in detail.';
+
+    model2Btn.style.background = '#2563eb';
+    model1Btn.style.background = '#334155';
+});
+</script>
+
+</div>
+
+
+
+
+<script>
+function toggleLibrary() {
+    const panel = document.getElementById('libraryPanel');
+
+    if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+    } else {
+        panel.style.display = 'none';
+    }
+}
+</script>
+    
+<script>
+function openEarAnatomy() {
+    document.getElementById('libraryPanel').style.display = 'none';
+
+    document.getElementById('model1Btn').click();
+}
+</script>
+
+
+
+
+<!-- Model Library Navigation -->
+
+<div style="
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 9999;
+    pointer-events: auto;
+    font-family: Arial, sans-serif;
+">
+
+">
+<button id="libraryBtn" onclick="toggleLibrary()" style="
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 12px 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 14px;
+    ">
+        ☰ Model Library
+    </button>
+</div>
+
+<!-- Model Library Sidebar -->
+<div id="libraryPanel" style="
+    display: none;
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    width: 240px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: #1e293b;
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    font-family: Arial, sans-serif;
+    z-index: 200;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+">
+    <h3 style="color: #93c5fd; margin-top: 0;">
+        Model Library
+    </h3>
+
+    <h4>Head &amp; Neck</h4>
+    
+<button onclick="openEarAnatomy()" style="
+    width: 100%;
+    padding: 12px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+">
+    👂 Ear Anatomy — 2 Models
+</button>
+
+
+    <h4>Central Nervous System</h4>
+    <p style="color: #94a3b8;">Brain — Coming soon</p>
+
+    <h4>Cardiovascular System</h4>
+    <p style="color: #94a3b8;">Heart — Coming soon</p>
+
+    <h4>Other Anatomical Models</h4>
+    <p style="color: #94a3b8;">More models coming soon</p>
+</div>
+
+<script>
+const toggleLabelsBtn = document.getElementById('toggleLabelsBtn');
+let labelsVisible = false;
+
+toggleLabelsBtn.addEventListener('click', function () {
+    labelsVisible = !labelsVisible;
+
+document.querySelectorAll('.anatomy-label').forEach(function(marker) {
+    marker.setAttribute('visible', labelsVisible);
+});
+
+    toggleLabelsBtn.textContent =
+        labelsVisible ? 'Hide Labels' : 'Show Labels';
+
+    toggleLabelsBtn.style.background =
+        labelsVisible ? '#2563eb' : '#334155';
+});
+</script>
+
+<script>
+document.getElementById('cranialSurfaceMarker')
+    .addEventListener('click', function () {
+
+        document.getElementById('modelInfoTitle').textContent =
+            'Exposed Cranial Surface';
+
+        document.getElementById('modelDescription').textContent =
+            'An exposed bony surface of the cranial region. Its precise anatomical boundaries require confirmation.';
+    });
 </script>
 
 
