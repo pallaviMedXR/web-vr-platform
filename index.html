@@ -1,47 +1,357 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-    <title>Interactive 3D Anatomy Atlas</title>
-    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
-        
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Interactive 3D Anatomy Atlas</title>
+
+<script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #101827;
+    color: white;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+button {
+    border: none;
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+button:focus-visible {
+    outline: 2px solid #93c5fd;
+    outline-offset: 3px;
+}
+
+/* Main header */
+
+.header {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 70%;
+    text-align: center;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.header p {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #94a3b8;
+}
+
+/* Model headings */
+
+.model-headings {
+    position: fixed;
+    top: 125px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    text-align: center;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.model-headings > div {
+    width: 50%;
+}
+
+.model-headings h2 {
+    font-size: 20px;
+}
+
+/* Centre divider */
+
+.divider {
+    position: fixed;
+    top: 175px;
+    bottom: 90px;
+    left: 50%;
+    width: 1px;
+    background: rgba(255,255,255,0.18);
+    pointer-events: none;
+    z-index: 50;
+}
+
+/* Model Library */
+
+.library-navigation {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+}
+
+#libraryBtn {
+    background: #2563eb;
+    padding: 12px 18px;
+    font-size: 14px;
+}
+
+#libraryPanel {
+    display: none;
+    position: fixed;
+    top: 80px;
+    left: 20px;
+    width: 260px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+#libraryPanel h3 {
+    color: #93c5fd;
+    margin-top: 0;
+}
+
+#libraryPanel p {
+    color: #94a3b8;
+}
+
+.library-model {
+    width: 100%;
+    background: #2563eb;
+    padding: 12px;
+    text-align: left;
+    font-size: 14px;
+}
+
+/* Main Anatomy Information panel */
+
+#anatomyInfo {
+    position: fixed;
+    top: 190px;
+    right: 20px;
+    width: 290px;
+    max-height: 65vh;
+    overflow-y: auto;
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 200;
+}
+
+#anatomyInfo h3 {
+    margin-top: 0;
+    color: #93c5fd;
+}
+
+.model-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.model-buttons button {
+    background: #334155;
+    padding: 10px;
+}
+
+#model1Btn {
+    background: #2563eb;
+}
+
+#modelDescription {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #cbd5e1;
+}
+
+/* Marker information window */
+
+#markerInfo {
+    display: none;
+    position: fixed;
+
+    top: 190px;
+    left: 25%;
+    transform: translateX(-50%);
+
+    width: 280px;
+    max-width: calc(50vw - 24px);
+
+    background: #1e293b;
+    border: 1px solid #405673;
+    border-radius: 12px;
+
+    padding: 16px;
+    z-index: 500;
+
+    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+}
+
+.marker-info-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+#markerTitle {
+    margin: 0;
+    color: #93c5fd;
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+#markerDescription {
+    margin: 12px 0 0;
+    color: #cbd5e1;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+#closeMarkerInfo {
+    background: transparent;
+    color: #cbd5e1;
+    font-size: 20px;
+    padding: 0 4px;
+    flex-shrink: 0;
+}
+
+/* Viewer controls */
+
+#resetButton {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    padding: 12px 24px;
+    background: #2563eb;
+    font-size: 16px;
+    z-index: 200;
+}
+
+#toggleLabelsBtn {
+    position: fixed;
+    bottom: 30px;
+    left: 180px;
+    padding: 12px 20px;
+    background: #334155;
+    font-size: 16px;
+    z-index: 200;
+}
+
+.instructions {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+}
+
+@media (max-width: 700px) {
+    .header h1 {
+        font-size: 18px;
+    }
+
+    .model-headings h2 {
+        font-size: 13px;
+    }
+
+    #anatomyInfo {
+        right: 10px;
+        width: 200px;
+        padding: 12px;
+    }
+
+    #markerInfo {
+        top: 185px;
+        width: 180px;
+        padding: 12px;
+    }
+
+    #resetButton {
+        bottom: 15px;
+        left: 10px;
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    #toggleLabelsBtn {
+        bottom: 15px;
+        left: 115px;
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .instructions {
+        display: none;
+    }
+}
+</style>
+
 <script>
-    
+
+/* Centre GLB models */
+
 AFRAME.registerComponent('center-model', {
     init: function () {
         this.el.addEventListener('model-loaded', () => {
-            const model = this.el.getObject3D('mesh');
+            const mesh = this.el.getObject3D('mesh');
 
-            if (!model) return;
+            if (!mesh) return;
 
-            const box = new THREE.Box3().setFromObject(model);
+            const box = new THREE.Box3().setFromObject(mesh);
             const center = new THREE.Vector3();
+
             box.getCenter(center);
 
             const localCenter = this.el.object3D
                 .worldToLocal(center.clone());
 
-            model.position.sub(localCenter);
+            mesh.position.sub(localCenter);
         });
     }
 });
-</script>
 
+/* Independent view-relative rotation */
 
-<script>
 AFRAME.registerComponent('drag-rotate', {
     init: function () {
         let dragging = false;
         let previousX = 0;
         let previousY = 0;
+        let pointerStartX = 0;
+        let pointerStartY = 0;
+        let markerPress = false;
 
         const model = this.el.object3D;
-        const worldX = new THREE.Vector3(1, 0, 0);
-        const worldY = new THREE.Vector3(0, 1, 0);
+        const rotationSpeed = 0.01;
 
         const qx = new THREE.Quaternion();
         const qy = new THREE.Quaternion();
-        const rotationSpeed = 0.01;
 
         const models = Array.from(
             document.querySelectorAll('[drag-rotate]')
@@ -50,50 +360,88 @@ AFRAME.registerComponent('drag-rotate', {
         const modelIndex = models.indexOf(this.el);
 
         this.onDown = (event) => {
+            if (
+                event.target.closest &&
+                event.target.closest(
+                    'button, #anatomyInfo, #markerInfo, #libraryPanel'
+                )
+            ) {
+                return;
+            }
+
             const isLeft =
                 event.clientX < window.innerWidth / 2;
 
-            if ((modelIndex === 0 && isLeft) ||
-                (modelIndex === 1 && !isLeft)) {
-
+            if (
+                (modelIndex === 0 && isLeft) ||
+                (modelIndex === 1 && !isLeft)
+            ) {
                 dragging = true;
                 previousX = event.clientX;
                 previousY = event.clientY;
+                pointerStartX = event.clientX;
+                pointerStartY = event.clientY;
+
+                // Do not rotate a model during a marker click.
+                markerPress = false;
+                const raycaster = this.el.sceneEl
+                    .querySelector('[raycaster]');
+
+                if (raycaster && raycaster.components.raycaster) {
+                    const intersections =
+                        raycaster.components.raycaster.intersections;
+
+                    markerPress = intersections.some(
+                        intersection => {
+                            return intersection.object.el &&
+                                intersection.object.el.classList &&
+                                intersection.object.el.classList.contains(
+                                    'anatomy-label'
+                                );
+                        }
+                    );
+                }
             }
         };
 
         this.onMove = (event) => {
             if (!dragging) return;
 
+            if (markerPress) return;
+
             const deltaX = event.clientX - previousX;
             const deltaY = event.clientY - previousY;
 
-           
-const camera = this.el.sceneEl.camera;
+            const camera = this.el.sceneEl.camera;
 
-if (!camera) return;
+            if (!camera) return;
 
-const cameraRight = new THREE.Vector3(1, 0, 0);
-const cameraUp = new THREE.Vector3(0, 1, 0);
+            const cameraRight =
+                new THREE.Vector3(1, 0, 0);
 
-cameraRight.applyQuaternion(camera.quaternion).normalize();
-cameraUp.applyQuaternion(camera.quaternion).normalize();
+            const cameraUp =
+                new THREE.Vector3(0, 1, 0);
 
-qx.setFromAxisAngle(
-    cameraRight,
-    deltaY * rotationSpeed
-);
+            cameraRight
+                .applyQuaternion(camera.quaternion)
+                .normalize();
 
-qy.setFromAxisAngle(
-    cameraUp,
-    deltaX * rotationSpeed
-);
+            cameraUp
+                .applyQuaternion(camera.quaternion)
+                .normalize();
 
+            qx.setFromAxisAngle(
+                cameraRight,
+                deltaY * rotationSpeed
+            );
 
-            // Apply rotations around fixed website axes
+            qy.setFromAxisAngle(
+                cameraUp,
+                deltaX * rotationSpeed
+            );
+
             model.quaternion.premultiply(qx);
             model.quaternion.premultiply(qy);
-
             model.quaternion.normalize();
 
             previousX = event.clientX;
@@ -102,41 +450,23 @@ qy.setFromAxisAngle(
 
         this.onUp = () => {
             dragging = false;
+            markerPress = false;
         };
 
-        window.addEventListener(
-            'pointerdown', this.onDown
-        );
-
-        window.addEventListener(
-            'pointermove', this.onMove
-        );
-
-        window.addEventListener(
-            'pointerup', this.onUp
-        );
+        window.addEventListener('pointerdown', this.onDown);
+        window.addEventListener('pointermove', this.onMove);
+        window.addEventListener('pointerup', this.onUp);
     },
 
     remove: function () {
-        window.removeEventListener(
-            'pointerdown', this.onDown
-        );
-
-        window.removeEventListener(
-            'pointermove', this.onMove
-        );
-
-        window.removeEventListener(
-            'pointerup', this.onUp
-        );
+        window.removeEventListener('pointerdown', this.onDown);
+        window.removeEventListener('pointermove', this.onMove);
+        window.removeEventListener('pointerup', this.onUp);
     }
 });
-</script>
 
+/* Independent zoom */
 
-
-
-<script>
 AFRAME.registerComponent('zoom-model', {
     init: function () {
         const model = this.el.object3D;
@@ -147,7 +477,9 @@ AFRAME.registerComponent('zoom-model', {
             );
 
             const modelIndex = models.indexOf(this.el);
-            const isLeft = event.clientX < window.innerWidth / 2;
+
+            const isLeft =
+                event.clientX < window.innerWidth / 2;
 
             const isSelected =
                 (modelIndex === 0 && isLeft) ||
@@ -160,9 +492,13 @@ AFRAME.registerComponent('zoom-model', {
             const zoomFactor =
                 event.deltaY > 0 ? 0.9 : 1.1;
 
-            const newScale = model.scale.x * zoomFactor;
+            const newScale =
+                model.scale.x * zoomFactor;
 
-            if (newScale >= 0.5 && newScale <= 3) {
+            if (
+                newScale >= 0.5 &&
+                newScale <= 3
+            ) {
                 model.scale.set(
                     newScale,
                     newScale,
@@ -171,443 +507,381 @@ AFRAME.registerComponent('zoom-model', {
             }
         };
 
-        window.addEventListener('wheel', this.onWheel, {
-            passive: false
-        });
+        window.addEventListener(
+            'wheel',
+            this.onWheel,
+            { passive: false }
+        );
     },
 
     remove: function () {
         window.removeEventListener('wheel', this.onWheel);
     }
 });
+
 </script>
-
-
 </head>
+
 <body>
-    
-<div style="
-    position: fixed;
-    bottom: 25px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 100;
-    background: #1e293b;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    pointer-events: none;
-    white-space: nowrap;
-">
-    🖱️ Click + Drag to Rotate
-    &nbsp;&nbsp; | &nbsp;&nbsp;
-    Scroll to Zoom
-</div>
 
-    
-<div style="
-   
-position: fixed;
-top: 15px;
-left: 50%;
-transform: translateX(-50%);
-text-align: center;
-z-index: 100;
+<!-- Model Library -->
 
-    color: white;
-    font-family: Arial, sans-serif;
-    pointer-events: none;
-">
-    <h1 style="
-        margin: 0;
-        font-size: 28px;
-        font-weight: 600;
-    ">
-        Interactive 3D Anatomy Atlas
-    </h1>
-
-    <p style="
-        margin-top: 8px;
-        font-size: 14px;
-        color: #94a3b8;
-    ">
-        Explore, rotate and examine anatomical structures in 3D
-    </p>
-</div>
-
-<div style="
-    position: fixed;
-    top: 125px;
-    left: 0;
-    width: 100%;
-    display: flex;
-    z-index: 100;
-    pointer-events: none;
-    font-family: Arial, sans-serif;
-    color: white;
-    text-align: center;
-">
-    <div style="width: 50%;">
-        <h2 style="font-size: 20px;">
-             Temporal Bone — External View
-        </h2>
-    </div>
-
-    <div style="width: 50%;">
-        <h2 style="font-size: 20px;">
-            Temporal Bone — Internal View
-        </h2>
-    </div>
-</div>
-
-<!-- Divider between the two ear models -->
-<div style="
-    position: fixed;
-    top: 175px;
-    bottom: 90px;
-    left: 50%;
-    width: 1px;
-    background: rgba(255, 255, 255, 0.18);
-    z-index: 50;
-    pointer-events: none;
-"></div>
-
-    <a-scene>   
-
-<!-- EAR MODEL 1 - LEFT -->
-<a-entity
-    drag-rotate
-    zoom-model
-    position="-1.5 3 -3">
-
-    
-<a-entity
-    gltf-model="url(ear_model_1_cleaned.glb)"
-    scale="10 10 10"
-    center-model>
-</a-entity>
-
-<!-- Temporary test marker -->
-
-<a-sphere
-    id="cranialSurfaceMarker"
-    class="anatomy-label"
-    data-label="Exposed Cranial Surface"
-    position="0 0 0.5"
-    radius="0.04
-     color="#38bdf8"
-    visible="false">
-</a-sphere>
-
-
-
-</a-entity>
-
-<!-- EAR MODEL 2 - RIGHT -->
-<a-entity
-drag-rotate
-    zoom-model
-    position="1.5 3 -3">
-
-    <a-entity
-        gltf-model="url(ear-model-2.glb)"
-        scale="1 1 1"
-        center-model>
-    </a-entity>
-
-</a-entity>
-
-
-
-</a-entity>
-        <a-sky color="#101827"></a-sky>
-        
-<a-entity position="0 1.6 0">
-   
-<a-camera
-    look-controls="enabled: false"
-    wasd-controls="enabled: false">
-
-    <a-entity
-        cursor="rayOrigin: mouse"
-        raycaster="objects: .anatomy-label">
-    </a-entity>
-
-</a-camera>
-
-</a-entity>
-    </a-scene>
-    
-<button id="resetButton"
-    style="
-        position: fixed;
-        bottom: 30px;
-        left: 30px;
-        padding: 12px 24px;
-        background: #2563eb;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 16px;
-        cursor: pointer;
-        z-index: 100;
-    ">
-    Reset View
-</button>
-
-<button id="toggleLabelsBtn" style="
-    position: fixed;
-    bottom: 30px;
-    left: 180px;
-    padding: 12px 20px;
-    background: #334155;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    z-index: 200;
-">
-    Show Labels
-</button>
-
-
-<script>
-document.getElementById('resetButton').addEventListener('click', function () {
-
-    const models = document.querySelectorAll('[drag-rotate]');
-
-    models.forEach(function(model) {
-        model.object3D.rotation.set(0, 0, 0);
-        model.object3D.scale.set(1, 1, 1);
-    });
-
-});
-</script>
-
-<!-- Anatomy Information Panel -->
-<div style="
-    position: fixed;
-    top: 190px;
-    right: 20px;
-    width: 250px;
-    background: #1e293b;
-    color: white;
-    padding: 20px;
-    border-radius: 12px;
-    font-family: Arial, sans-serif;
-    z-index: 100;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-">
-
-    <h3 style="margin-top: 0; color: #93c5fd;">
-        Anatomy Information
-    </h3>
-
-    
-<div style="
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-">
-    <button id="model1Btn" style="
-        background: #2563eb;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 6px;
-        cursor: pointer;
-    ">
-        External View
-    </button>
-
-    <button id="model2Btn" style="
-        background: #334155;
-        color: white;
-        border: none;
-        padding: 10px;
-        border-radius: 6px;
-        cursor: pointer;
-    ">
-        Internal View
-    </button>
-</div>
-
-<h4 id="modelInfoTitle">Temporal Bone — External View</h4>
-
-<p id="modelDescription" style="
-    font-size: 14px;
-    line-height: 1.6;
-    color: #cbd5e1;
-">
-    Explore the external morphology, bony landmarks
-and associated anatomical structures of the temporal bone. Rotate and zoom to examine the specimen in detail.
-</p>
-</div>
-
-
-  
-<script>
-const model1Btn = document.getElementById('model1Btn');
-const model2Btn = document.getElementById('model2Btn');
-const modelInfoTitle = document.getElementById('modelInfoTitle');
-const modelDescription = document.getElementById('modelDescription');
-
-model1Btn.addEventListener('click', function () {
-    modelInfoTitle.textContent = 'Temporal Bone — External View';
-
-    modelDescription.textContent =
-    'Explore the external morphology, bony landmarks and associated anatomical structures of the temporal bone. Rotate and zoom to examine the specimen in detail.';
-
-    model1Btn.style.background = '#2563eb';
-    model2Btn.style.background = '#334155';
-});
-
-model2Btn.addEventListener('click', function () {
-    modelInfoTitle.textContent = 'Temporal Bone — Internal View';
-
-    modelDescription.textContent =
-    'Examine the exposed internal anatomy of the temporal bone, including its structural features and anatomical relationships. Rotate and zoom to explore the specimen in detail.';
-
-    model2Btn.style.background = '#2563eb';
-    model1Btn.style.background = '#334155';
-});
-</script>
-
-</div>
-
-
-
-
-<script>
-function toggleLibrary() {
-    const panel = document.getElementById('libraryPanel');
-
-    if (panel.style.display === 'none') {
-        panel.style.display = 'block';
-    } else {
-        panel.style.display = 'none';
-    }
-}
-</script>
-    
-<script>
-function openEarAnatomy() {
-    document.getElementById('libraryPanel').style.display = 'none';
-
-    document.getElementById('model1Btn').click();
-}
-</script>
-
-
-
-
-<!-- Model Library Navigation -->
-
-<div style="
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 9999;
-    pointer-events: auto;
-    font-family: Arial, sans-serif;
-">
-
-">
-<button id="libraryBtn" onclick="toggleLibrary()" style="
-        background: #2563eb;
-        color: white;
-        border: none;
-        padding: 12px 18px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-size: 14px;
-    ">
+<div class="library-navigation">
+    <button id="libraryBtn" aria-expanded="false">
         ☰ Model Library
     </button>
 </div>
 
-<!-- Model Library Sidebar -->
-<div id="libraryPanel" style="
-    display: none;
-    position: fixed;
-    top: 80px;
-    left: 20px;
-    width: 240px;
-    max-height: 70vh;
-    overflow-y: auto;
-    background: #1e293b;
-    color: white;
-    padding: 20px;
-    border-radius: 12px;
-    font-family: Arial, sans-serif;
-    z-index: 200;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-">
-    <h3 style="color: #93c5fd; margin-top: 0;">
-        Model Library
-    </h3>
+<div id="libraryPanel">
+    <h3>Model Library</h3>
 
     <h4>Head &amp; Neck</h4>
-    
-<button onclick="openEarAnatomy()" style="
-    width: 100%;
-    padding: 12px;
-    background: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    text-align: left;
-    font-size: 14px;
-">
-    👂 Ear Anatomy — 2 Models
-</button>
 
+    <button id="openEarBtn" class="library-model">
+        Temporal Bone — 2 Models
+    </button>
 
     <h4>Central Nervous System</h4>
-    <p style="color: #94a3b8;">Brain — Coming soon</p>
+    <p>Brain — Coming soon</p>
 
     <h4>Cardiovascular System</h4>
-    <p style="color: #94a3b8;">Heart — Coming soon</p>
+    <p>Heart — Coming soon</p>
 
     <h4>Other Anatomical Models</h4>
-    <p style="color: #94a3b8;">More models coming soon</p>
+    <p>More models coming soon</p>
+</div>
+
+<!-- Header -->
+
+<div class="header">
+    <h1>Interactive 3D Anatomy Atlas</h1>
+    <p>Explore anatomical structures in three dimensions</p>
+</div>
+
+<!-- Model headings -->
+
+<div class="model-headings">
+    <div>
+        <h2>Temporal Bone — External View</h2>
+    </div>
+
+    <div>
+        <h2>Temporal Bone — Internal View</h2>
+    </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 3D scene -->
+
+<a-scene
+    embedded
+    style="
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    "
+    background="color: #101827">
+
+    <!-- Model 1: External View -->
+
+    <a-entity
+        drag-rotate
+        zoom-model
+        position="-1.5 3 -3">
+
+        <a-entity
+            gltf-model="url(ear_model_1_cleaned.glb)"
+            scale="10 10 10"
+            center-model>
+        </a-entity>
+
+        <!-- Provisional anatomical markers -->
+
+        <a-entity id="temporalBoneLabels">
+
+            <a-sphere
+                class="anatomy-label"
+                data-title="Exposed Cranial Surface"
+                data-description="Exposed bony surface of the cranial region. Its precise anatomical boundaries require confirmation."
+                position="0 0 0.5"
+                radius="0.01"
+                material="color: blue; shader: flat "
+                visible="false">
+            </a-sphere>
+
+            <a-sphere
+                class="anatomy-label"
+                data-title="Vascular Markings"
+                data-description="Branching vascular markings on the exposed cranial surface. Their precise anatomical identity requires confirmation."
+                position="0.2 0.25 0.5"
+                radius="0.01"
+                material="color: blue; shader: flat "
+                visible="false">
+            </a-sphere>
+
+        </a-entity>
+
+    </a-entity>
+
+    <!-- Model 2: Internal View -->
+
+    <a-entity
+        drag-rotate
+        zoom-model
+        position="1.5 3 -3">
+
+        <a-entity
+            gltf-model="url(ear-model-2.glb)"
+            scale="1 1 1"
+            center-model>
+        </a-entity>
+
+    </a-entity>
+
+    <a-sky color="#101827"></a-sky>
+
+    <!-- Camera and mouse raycaster -->
+
+    <a-entity position="0 1.6 0">
+        <a-camera
+            look-controls="enabled: false"
+            wasd-controls="enabled: false">
+
+            <a-entity
+                cursor="rayOrigin: mouse"
+                raycaster="objects: .anatomy-label">
+            </a-entity>
+
+        </a-camera>
+    </a-entity>
+
+</a-scene>
+
+<!-- Viewer controls -->
+
+<button id="resetButton">Reset View</button>
+<button id="toggleLabelsBtn">Show Labels</button>
+
+<div class="instructions">
+    Click + Drag to Rotate
+    &nbsp;&nbsp; | &nbsp;&nbsp;
+    Scroll to Zoom
+</div>
+
+<!-- New marker information window -->
+
+<div id="markerInfo" role="dialog" aria-label="Anatomical marker information">
+
+    <div class="marker-info-header">
+        <h4 id="markerTitle">Anatomical Structure</h4>
+
+        <button
+            id="closeMarkerInfo"
+            aria-label="Close anatomical information">
+            ×
+        </button>
+    </div>
+
+    <p id="markerDescription"></p>
+</div>
+
+<!-- Main Anatomy Information panel -->
+
+<div id="anatomyInfo">
+
+    <h3>Anatomy Information</h3>
+
+    <div class="model-buttons">
+        <button id="model1Btn">External View</button>
+        <button id="model2Btn">Internal View</button>
+    </div>
+
+    <h4 id="modelInfoTitle">
+        Temporal Bone — External View
+    </h4>
+
+    <p id="modelDescription">
+        The temporal bone forms part of the lateral skull
+        and cranial base. It contributes to the
+        temporomandibular joint and houses structures
+        associated with hearing and balance.
+    </p>
+
 </div>
 
 <script>
-const toggleLabelsBtn = document.getElementById('toggleLabelsBtn');
-let labelsVisible = false;
 
-toggleLabelsBtn.addEventListener('click', function () {
-    labelsVisible = !labelsVisible;
+document.addEventListener('DOMContentLoaded', function () {
 
-document.querySelectorAll('.anatomy-label').forEach(function(marker) {
-    marker.setAttribute('visible', labelsVisible);
-});
+    const model1Btn =
+        document.getElementById('model1Btn');
 
-    toggleLabelsBtn.textContent =
-        labelsVisible ? 'Hide Labels' : 'Show Labels';
+    const model2Btn =
+        document.getElementById('model2Btn');
 
-    toggleLabelsBtn.style.background =
-        labelsVisible ? '#2563eb' : '#334155';
-});
-</script>
+    const modelInfoTitle =
+        document.getElementById('modelInfoTitle');
 
-<script>
-document.getElementById('cranialSurfaceMarker')
-    .addEventListener('click', function () {
+    const modelDescription =
+        document.getElementById('modelDescription');
 
-        document.getElementById('modelInfoTitle').textContent =
-            'Exposed Cranial Surface';
+    const toggleLabelsBtn =
+        document.getElementById('toggleLabelsBtn');
 
-        document.getElementById('modelDescription').textContent =
-            'An exposed bony surface of the cranial region. Its precise anatomical boundaries require confirmation.';
+    const markerInfo =
+        document.getElementById('markerInfo');
+
+    const markerTitle =
+        document.getElementById('markerTitle');
+
+    const markerDescription =
+        document.getElementById('markerDescription');
+
+    const closeMarkerInfo =
+        document.getElementById('closeMarkerInfo');
+
+    const libraryBtn =
+        document.getElementById('libraryBtn');
+
+    const libraryPanel =
+        document.getElementById('libraryPanel');
+
+    const markers = Array.from(
+        document.querySelectorAll('.anatomy-label')
+    );
+
+    const externalDescription =
+        'The temporal bone forms part of the lateral skull and cranial base. It contributes to the temporomandibular joint and houses structures associated with hearing and balance.';
+
+    const internalDescription =
+        'The temporal bone houses the middle and inner ear, including the auditory ossicles, cochlea and vestibular apparatus. Its canals transmit important neurovascular structures.';
+
+    let labelsVisible = false;
+
+    // Hide the marker information window.
+    function closeMarkerWindow() {
+        markerInfo.style.display = 'none';
+    }
+
+    // Switch the general model information.
+    function selectModel(view) {
+        const external = view === 'external';
+
+        modelInfoTitle.textContent = external
+            ? 'Temporal Bone — External View'
+            : 'Temporal Bone — Internal View';
+
+        modelDescription.textContent = external
+            ? externalDescription
+            : internalDescription;
+
+        model1Btn.style.background =
+            external ? '#2563eb' : '#334155';
+
+        model2Btn.style.background =
+            external ? '#334155' : '#2563eb';
+
+        closeMarkerWindow();
+    }
+
+    model1Btn.addEventListener('click', function () {
+        selectModel('external');
     });
-</script>
 
+    model2Btn.addEventListener('click', function () {
+        selectModel('internal');
+    });
+
+    // Show or hide anatomical markers.
+    toggleLabelsBtn.addEventListener('click', function () {
+        labelsVisible = !labelsVisible;
+
+        markers.forEach(function (marker) {
+            marker.setAttribute('visible', labelsVisible);
+        });
+
+        toggleLabelsBtn.textContent =
+            labelsVisible ? 'Hide Labels' : 'Show Labels';
+
+        toggleLabelsBtn.style.background =
+            labelsVisible ? '#2563eb' : '#334155';
+
+        toggleLabelsBtn.setAttribute(
+            'aria-pressed',
+            String(labelsVisible)
+        );
+
+        if (!labelsVisible) {
+            closeMarkerWindow();
+        }
+    });
+
+    // Open the information window for a clicked marker.
+    markers.forEach(function (marker) {
+        marker.addEventListener('click', function (event) {
+            if (!labelsVisible) return;
+
+            event.stopPropagation();
+
+            markerTitle.textContent =
+                marker.getAttribute('data-title');
+
+            markerDescription.textContent =
+                marker.getAttribute('data-description');
+
+            markerInfo.style.display = 'block';
+        });
+    });
+
+    // Close button.
+    closeMarkerInfo.addEventListener('click', function () {
+        closeMarkerWindow();
+    });
+
+    // Reset both models.
+    document.getElementById('resetButton')
+        .addEventListener('click', function () {
+
+            document.querySelectorAll('[drag-rotate]')
+                .forEach(function (model) {
+                    model.object3D.rotation.set(0, 0, 0);
+                    model.object3D.scale.set(1, 1, 1);
+                });
+
+            closeMarkerWindow();
+        });
+
+    // Model Library navigation.
+    libraryBtn.addEventListener('click', function () {
+        const isOpen =
+            libraryPanel.style.display === 'block';
+
+        libraryPanel.style.display =
+            isOpen ? 'none' : 'block';
+
+        libraryBtn.setAttribute(
+            'aria-expanded',
+            String(!isOpen)
+        );
+    });
+
+    document.getElementById('openEarBtn')
+        .addEventListener('click', function () {
+            libraryPanel.style.display = 'none';
+
+            libraryBtn.setAttribute(
+                'aria-expanded',
+                'false'
+            );
+
+            selectModel('external');
+        });
+
+});
+
+</script>
 
 </body>
 </html>
