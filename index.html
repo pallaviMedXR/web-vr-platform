@@ -1,19 +1,14 @@
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>Interactive 3D Anatomy Atlas</title>
-
 <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
 
 <style>
-* {
-    box-sizing: border-box;
-}
+* { box-sizing: border-box; }
 
 body {
     margin: 0;
@@ -36,8 +31,6 @@ button:focus-visible {
     outline-offset: 3px;
 }
 
-/* Main header */
-
 .header {
     position: fixed;
     top: 15px;
@@ -49,18 +42,8 @@ button:focus-visible {
     pointer-events: none;
 }
 
-.header h1 {
-    margin: 0;
-    font-size: 28px;
-}
-
-.header p {
-    margin-top: 8px;
-    font-size: 14px;
-    color: #94a3b8;
-}
-
-/* Model headings */
+.header h1 { margin: 0; font-size: 28px; }
+.header p { margin-top: 8px; font-size: 14px; color: #94a3b8; }
 
 .model-headings {
     position: fixed;
@@ -73,15 +56,8 @@ button:focus-visible {
     z-index: 100;
 }
 
-.model-headings > div {
-    width: 50%;
-}
-
-.model-headings h2 {
-    font-size: 20px;
-}
-
-/* Centre divider */
+.model-headings > div { width: 50%; }
+.model-headings h2 { font-size: 20px; }
 
 .divider {
     position: fixed;
@@ -93,8 +69,6 @@ button:focus-visible {
     pointer-events: none;
     z-index: 50;
 }
-
-/* Model Library */
 
 .library-navigation {
     position: fixed;
@@ -124,14 +98,8 @@ button:focus-visible {
     z-index: 1000;
 }
 
-#libraryPanel h3 {
-    color: #93c5fd;
-    margin-top: 0;
-}
-
-#libraryPanel p {
-    color: #94a3b8;
-}
+#libraryPanel h3 { color: #93c5fd; margin-top: 0; }
+#libraryPanel p { color: #94a3b8; }
 
 .library-model {
     width: 100%;
@@ -140,8 +108,6 @@ button:focus-visible {
     text-align: left;
     font-size: 14px;
 }
-
-/* Main Anatomy Information panel */
 
 #anatomyInfo {
     position: fixed;
@@ -157,10 +123,7 @@ button:focus-visible {
     z-index: 200;
 }
 
-#anatomyInfo h3 {
-    margin-top: 0;
-    color: #93c5fd;
-}
+#anatomyInfo h3 { margin-top: 0; color: #93c5fd; }
 
 .model-buttons {
     display: flex;
@@ -168,14 +131,8 @@ button:focus-visible {
     margin-bottom: 20px;
 }
 
-.model-buttons button {
-    background: #334155;
-    padding: 10px;
-}
-
-#model1Btn {
-    background: #2563eb;
-}
+.model-buttons button { background: #334155; padding: 10px; }
+#model1Btn { background: #2563eb; }
 
 #modelDescription {
     font-size: 14px;
@@ -183,26 +140,19 @@ button:focus-visible {
     color: #cbd5e1;
 }
 
-/* Marker information window */
-
 #markerInfo {
     display: none;
     position: fixed;
-
     top: 190px;
     left: 25%;
     transform: translateX(-50%);
-
     width: 280px;
     max-width: calc(50vw - 24px);
-
     background: #1e293b;
     border: 1px solid #405673;
     border-radius: 12px;
-
     padding: 16px;
     z-index: 500;
-
     box-shadow: 0 6px 24px rgba(0,0,0,0.35);
 }
 
@@ -232,10 +182,7 @@ button:focus-visible {
     color: #cbd5e1;
     font-size: 20px;
     padding: 0 4px;
-    flex-shrink: 0;
 }
-
-/* Viewer controls */
 
 #resetButton {
     position: fixed;
@@ -271,14 +218,25 @@ button:focus-visible {
     z-index: 100;
 }
 
-@media (max-width: 700px) {
-    .header h1 {
-        font-size: 18px;
-    }
+#pickerOutput {
+    position: fixed;
+    left: 50%;
+    top: 90px;
+    transform: translateX(-50%);
+    z-index: 3000;
+    background: #1e293b;
+    border: 1px solid #405673;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font: 13px monospace;
+    color: #e2e8f0;
+    max-width: 90vw;
+    pointer-events: none;
+}
 
-    .model-headings h2 {
-        font-size: 13px;
-    }
+@media (max-width: 700px) {
+    .header h1 { font-size: 18px; }
+    .model-headings h2 { font-size: 13px; }
 
     #anatomyInfo {
         right: 10px;
@@ -306,26 +264,20 @@ button:focus-visible {
         font-size: 12px;
     }
 
-    .instructions {
-        display: none;
-    }
+    .instructions { display: none; }
 }
 </style>
 
 <script>
-
-/* Centre GLB models */
-
+// Centre each loaded GLB.
 AFRAME.registerComponent('center-model', {
     init: function () {
         this.el.addEventListener('model-loaded', () => {
             const mesh = this.el.getObject3D('mesh');
-
             if (!mesh) return;
 
             const box = new THREE.Box3().setFromObject(mesh);
             const center = new THREE.Vector3();
-
             box.getCenter(center);
 
             const localCenter = this.el.object3D
@@ -336,109 +288,71 @@ AFRAME.registerComponent('center-model', {
     }
 });
 
-/* Independent view-relative rotation */
-
+// Independent view-relative rotation.
 AFRAME.registerComponent('drag-rotate', {
     init: function () {
         let dragging = false;
         let previousX = 0;
         let previousY = 0;
-        let pointerStartX = 0;
-        let pointerStartY = 0;
         let markerPress = false;
 
         const model = this.el.object3D;
         const rotationSpeed = 0.01;
-
         const qx = new THREE.Quaternion();
         const qy = new THREE.Quaternion();
 
         const models = Array.from(
             document.querySelectorAll('[drag-rotate]')
         );
-
         const modelIndex = models.indexOf(this.el);
 
-        this.onDown = (event) => {
-            if (
-                event.target.closest &&
+        this.onDown = event => {
+            if (event.target.closest &&
                 event.target.closest(
                     'button, #anatomyInfo, #markerInfo, #libraryPanel'
-                )
-            ) {
-                return;
-            }
+                )) return;
 
-            const isLeft =
-                event.clientX < window.innerWidth / 2;
+            const isLeft = event.clientX < window.innerWidth / 2;
 
-            if (
-                (modelIndex === 0 && isLeft) ||
-                (modelIndex === 1 && !isLeft)
-            ) {
+            if ((modelIndex === 0 && isLeft) ||
+                (modelIndex === 1 && !isLeft)) {
                 dragging = true;
                 previousX = event.clientX;
                 previousY = event.clientY;
-                pointerStartX = event.clientX;
-                pointerStartY = event.clientY;
 
-                // Do not rotate a model during a marker click.
                 markerPress = false;
                 const raycaster = this.el.sceneEl
                     .querySelector('[raycaster]');
 
                 if (raycaster && raycaster.components.raycaster) {
                     const intersections =
-                        raycaster.components.raycaster.intersections;
+                        raycaster.components.raycaster.intersections || [];
 
-                    markerPress = intersections.some(
-                        intersection => {
-                            return intersection.object.el &&
-                                intersection.object.el.classList &&
-                                intersection.object.el.classList.contains(
-                                    'anatomy-label'
-                                );
-                        }
+                    markerPress = intersections.some(hit =>
+                        hit.object.el &&
+                        hit.object.el.classList &&
+                        hit.object.el.classList.contains('anatomy-label')
                     );
                 }
             }
         };
 
-        this.onMove = (event) => {
-            if (!dragging) return;
-
-            if (markerPress) return;
+        this.onMove = event => {
+            if (!dragging || markerPress) return;
 
             const deltaX = event.clientX - previousX;
             const deltaY = event.clientY - previousY;
-
             const camera = this.el.sceneEl.camera;
-
             if (!camera) return;
 
-            const cameraRight =
-                new THREE.Vector3(1, 0, 0);
+            const cameraRight = new THREE.Vector3(1, 0, 0);
+            const cameraUp = new THREE.Vector3(0, 1, 0);
 
-            const cameraUp =
-                new THREE.Vector3(0, 1, 0);
+            cameraRight.applyQuaternion(camera.quaternion).normalize();
+            cameraUp.applyQuaternion(camera.quaternion).normalize();
 
-            cameraRight
-                .applyQuaternion(camera.quaternion)
-                .normalize();
-
-            cameraUp
-                .applyQuaternion(camera.quaternion)
-                .normalize();
-
-            qx.setFromAxisAngle(
-                cameraRight,
-                deltaY * rotationSpeed
-            );
-
-            qy.setFromAxisAngle(
-                cameraUp,
-                deltaX * rotationSpeed
-            );
+            qx.setFromAxisAngle(cameraRight, deltaY * rotationSpeed);
+            qy.setFromAxisAngle(cameraUp, deltaX * rotationSpeed);
 
             model.quaternion.premultiply(qx);
             model.quaternion.premultiply(qy);
@@ -465,53 +379,38 @@ AFRAME.registerComponent('drag-rotate', {
     }
 });
 
-/* Independent zoom */
-
+// Independent zoom.
 AFRAME.registerComponent('zoom-model', {
     init: function () {
         const model = this.el.object3D;
 
-        this.onWheel = (event) => {
+        this.onWheel = event => {
             const models = Array.from(
                 document.querySelectorAll('[zoom-model]')
             );
 
             const modelIndex = models.indexOf(this.el);
+            const isLeft = event.clientX < window.innerWidth / 2;
 
-            const isLeft =
-                event.clientX < window.innerWidth / 2;
-
-            const isSelected =
+            const selected =
                 (modelIndex === 0 && isLeft) ||
                 (modelIndex === 1 && !isLeft);
 
-            if (!isSelected) return;
+            if (!selected) return;
 
             event.preventDefault();
 
-            const zoomFactor =
-                event.deltaY > 0 ? 0.9 : 1.1;
+            const factor = event.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = model.scale.x * factor;
 
-            const newScale =
-                model.scale.x * zoomFactor;
-
-            if (
-                newScale >= 0.5 &&
-                newScale <= 3
-            ) {
-                model.scale.set(
-                    newScale,
-                    newScale,
-                    newScale
-                );
+            if (newScale >= 0.5 && newScale <= 3) {
+                model.scale.set(newScale, newScale, newScale);
             }
         };
 
-        window.addEventListener(
-            'wheel',
-            this.onWheel,
-            { passive: false }
-        );
+        window.addEventListener('wheel', this.onWheel, {
+            passive: false
+        });
     },
 
     remove: function () {
@@ -519,13 +418,142 @@ AFRAME.registerComponent('zoom-model', {
     }
 });
 
+// Development-only marker coordinate picker.
+// Activate with ?pick in the page URL.
+AFRAME.registerComponent('marker-picker', {
+    init: function () {
+        const scene = this.el;
+        const raycaster = new THREE.Raycaster();
+        let start = null;
+
+        const box = document.createElement('div');
+        box.id = 'pickerOutput';
+        box.textContent =
+            'Picker mode: click a point on the External View bone';
+        document.body.appendChild(box);
+
+        const isControl = target =>
+            target.closest &&
+            target.closest(
+                'button, #anatomyInfo, #markerInfo, #libraryPanel'
+            );
+
+        this.onDown = event => {
+            if (event.button !== 0 || isControl(event.target)) {
+                start = null;
+                return;
+            }
+
+            start = [event.clientX, event.clientY];
+        };
+
+        this.onUp = event => {
+            if (!start || event.button !== 0) return;
+
+            const distance = Math.hypot(
+                event.clientX - start[0],
+                event.clientY - start[1]
+            );
+
+            start = null;
+
+            // Ignore drags and clicks on interface controls.
+            if (distance > 5 || isControl(event.target)) return;
+
+            const modelEl = document.querySelector(
+                '[gltf-model="url(ear_model_1_cleaned.glb)"]'
+            );
+
+            const group = document.getElementById(
+                'temporalBoneLabels'
+            );
+
+            const mesh = modelEl && modelEl.getObject3D('mesh');
+
+            if (!mesh || !group || !scene.camera || !scene.canvas) {
+                box.textContent =
+                    'Waiting for the External View model to load';
+                return;
+            }
+
+            // Convert the mouse position into camera coordinates.
+            const rect = scene.canvas.getBoundingClientRect();
+
+            if (
+                event.clientX < rect.left ||
+                event.clientX > rect.right ||
+                event.clientY < rect.top ||
+                event.clientY > rect.bottom
+            ) return;
+
+            const pointer = new THREE.Vector2(
+                ((event.clientX - rect.left) / rect.width) * 2 - 1,
+                -((event.clientY - rect.top) / rect.height) * 2 + 1
+            );
+
+            scene.object3D.updateMatrixWorld(true);
+            scene.camera.updateMatrixWorld(true);
+
+            raycaster.setFromCamera(pointer, scene.camera);
+
+            // Intersect the actual photogrammetry mesh.
+            const hit = raycaster.intersectObject(mesh, true)[0];
+
+            if (!hit) {
+                box.textContent =
+                    'Missed the bone. Click directly on its surface.';
+                return;
+            }
+
+            // Obtain the surface normal in world coordinates.
+            const normal = hit.face.normal.clone()
+                .transformDirection(hit.object.matrixWorld);
+
+            if (normal.dot(raycaster.ray.direction) > 0) {
+                normal.negate();
+            }
+
+            // Lift the marker slightly above the mesh.
+            // 0.005 is in scene units, not calibrated millimetres.
+            const point = hit.point.clone()
+                .addScaledVector(normal, 0.005);
+
+            // Convert world position into marker-group coordinates.
+            const local = group.object3D.worldToLocal(point);
+
+            const result = 'position="' +
+                [local.x, local.y, local.z]
+                    .map(n => n.toFixed(4))
+                    .join(' ') +
+                '"';
+
+            box.textContent = result + ' (copy these coordinates)';
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(result).catch(() => {});
+            }
+
+            console.log('Marker picker:', result);
+        };
+
+        window.addEventListener('pointerdown', this.onDown);
+        window.addEventListener('pointerup', this.onUp);
+    },
+
+    remove: function () {
+        window.removeEventListener('pointerdown', this.onDown);
+        window.removeEventListener('pointerup', this.onUp);
+
+        const box = document.getElementById('pickerOutput');
+        if (box) box.remove();
+    }
+});
 </script>
 </head>
 
 <body>
 
 <!-- Model Library -->
-
 <div class="library-navigation">
     <button id="libraryBtn" aria-expanded="false">
         ☰ Model Library
@@ -536,7 +564,6 @@ AFRAME.registerComponent('zoom-model', {
     <h3>Model Library</h3>
 
     <h4>Head &amp; Neck</h4>
-
     <button id="openEarBtn" class="library-model">
         Temporal Bone — 2 Models
     </button>
@@ -552,40 +579,26 @@ AFRAME.registerComponent('zoom-model', {
 </div>
 
 <!-- Header -->
-
 <div class="header">
     <h1>Interactive 3D Anatomy Atlas</h1>
     <p>Explore anatomical structures in three dimensions</p>
 </div>
 
 <!-- Model headings -->
-
 <div class="model-headings">
-    <div>
-        <h2>Temporal Bone — External View</h2>
-    </div>
-
-    <div>
-        <h2>Temporal Bone — Internal View</h2>
-    </div>
+    <div><h2>Temporal Bone — External View</h2></div>
+    <div><h2>Temporal Bone — Internal View</h2></div>
 </div>
 
 <div class="divider"></div>
 
 <!-- 3D scene -->
-
 <a-scene
     embedded
-    style="
-        position: fixed;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-    "
+    style="position:fixed;inset:0;width:100%;height:100%;"
     background="color: #101827">
 
     <!-- Model 1: External View -->
-
     <a-entity
         drag-rotate
         zoom-model
@@ -598,16 +611,15 @@ AFRAME.registerComponent('zoom-model', {
         </a-entity>
 
         <!-- Provisional anatomical markers -->
-
         <a-entity id="temporalBoneLabels">
 
             <a-sphere
                 class="anatomy-label"
                 data-title="Exposed Cranial Surface"
                 data-description="Exposed bony surface of the cranial region. Its precise anatomical boundaries require confirmation."
-                position="0 0 0.5"
+                position="-0.1485 -0.0183 0.2546"
                 radius="0.01"
-                material="color: blue; shader: flat "
+                material="color: blue; shader: flat"
                 visible="false">
             </a-sphere>
 
@@ -615,18 +627,16 @@ AFRAME.registerComponent('zoom-model', {
                 class="anatomy-label"
                 data-title="Vascular Markings"
                 data-description="Branching vascular markings on the exposed cranial surface. Their precise anatomical identity requires confirmation."
-                position="0.2 0.25 0.5"
+                position="-0.0508 0.2604 0.0151"
                 radius="0.01"
-                material="color: blue; shader: flat "
+                material="color: blue; shader: flat"
                 visible="false">
             </a-sphere>
 
         </a-entity>
-
     </a-entity>
 
     <!-- Model 2: Internal View -->
-
     <a-entity
         drag-rotate
         zoom-model
@@ -637,13 +647,11 @@ AFRAME.registerComponent('zoom-model', {
             scale="1 1 1"
             center-model>
         </a-entity>
-
     </a-entity>
 
     <a-sky color="#101827"></a-sky>
 
     <!-- Camera and mouse raycaster -->
-
     <a-entity position="0 1.6 0">
         <a-camera
             look-controls="enabled: false"
@@ -653,14 +661,11 @@ AFRAME.registerComponent('zoom-model', {
                 cursor="rayOrigin: mouse"
                 raycaster="objects: .anatomy-label">
             </a-entity>
-
         </a-camera>
     </a-entity>
-
 </a-scene>
 
 <!-- Viewer controls -->
-
 <button id="resetButton">Reset View</button>
 <button id="toggleLabelsBtn">Show Labels</button>
 
@@ -670,16 +675,14 @@ AFRAME.registerComponent('zoom-model', {
     Scroll to Zoom
 </div>
 
-<!-- New marker information window -->
-
-<div id="markerInfo" role="dialog" aria-label="Anatomical marker information">
+<!-- Marker information window -->
+<div id="markerInfo" role="dialog"
+     aria-label="Anatomical marker information">
 
     <div class="marker-info-header">
         <h4 id="markerTitle">Anatomical Structure</h4>
-
-        <button
-            id="closeMarkerInfo"
-            aria-label="Close anatomical information">
+        <button id="closeMarkerInfo"
+                aria-label="Close anatomical information">
             ×
         </button>
     </div>
@@ -688,9 +691,7 @@ AFRAME.registerComponent('zoom-model', {
 </div>
 
 <!-- Main Anatomy Information panel -->
-
 <div id="anatomyInfo">
-
     <h3>Anatomy Information</h3>
 
     <div class="model-buttons">
@@ -698,9 +699,7 @@ AFRAME.registerComponent('zoom-model', {
         <button id="model2Btn">Internal View</button>
     </div>
 
-    <h4 id="modelInfoTitle">
-        Temporal Bone — External View
-    </h4>
+    <h4 id="modelInfoTitle">Temporal Bone — External View</h4>
 
     <p id="modelDescription">
         The temporal bone forms part of the lateral skull
@@ -708,45 +707,36 @@ AFRAME.registerComponent('zoom-model', {
         temporomandibular joint and houses structures
         associated with hearing and balance.
     </p>
-
 </div>
 
 <script>
-
 document.addEventListener('DOMContentLoaded', function () {
 
-    const model1Btn =
-        document.getElementById('model1Btn');
+    const scene = document.querySelector('a-scene');
 
-    const model2Btn =
-        document.getElementById('model2Btn');
+    // Enable coordinate picking when the URL contains ?pick.
+    if (new URLSearchParams(window.location.search).has('pick')) {
+        scene.setAttribute('marker-picker', '');
+    }
 
-    const modelInfoTitle =
-        document.getElementById('modelInfoTitle');
-
-    const modelDescription =
-        document.getElementById('modelDescription');
+    const model1Btn = document.getElementById('model1Btn');
+    const model2Btn = document.getElementById('model2Btn');
+    const modelInfoTitle = document.getElementById('modelInfoTitle');
+    const modelDescription = document.getElementById('modelDescription');
 
     const toggleLabelsBtn =
         document.getElementById('toggleLabelsBtn');
 
-    const markerInfo =
-        document.getElementById('markerInfo');
-
-    const markerTitle =
-        document.getElementById('markerTitle');
-
+    const markerInfo = document.getElementById('markerInfo');
+    const markerTitle = document.getElementById('markerTitle');
     const markerDescription =
         document.getElementById('markerDescription');
 
     const closeMarkerInfo =
         document.getElementById('closeMarkerInfo');
 
-    const libraryBtn =
-        document.getElementById('libraryBtn');
-
-    const libraryPanel =
-        document.getElementById('libraryPanel');
+    const libraryBtn = document.getElementById('libraryBtn');
+    const libraryPanel = document.getElementById('libraryPanel');
 
     const markers = Array.from(
         document.querySelectorAll('.anatomy-label')
@@ -760,12 +750,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let labelsVisible = false;
 
-    // Hide the marker information window.
     function closeMarkerWindow() {
         markerInfo.style.display = 'none';
     }
 
-    // Switch the general model information.
     function selectModel(view) {
         const external = view === 'external';
 
@@ -786,19 +774,19 @@ document.addEventListener('DOMContentLoaded', function () {
         closeMarkerWindow();
     }
 
-    model1Btn.addEventListener('click', function () {
+    model1Btn.addEventListener('click', () => {
         selectModel('external');
     });
 
-    model2Btn.addEventListener('click', function () {
+    model2Btn.addEventListener('click', () => {
         selectModel('internal');
     });
 
-    // Show or hide anatomical markers.
+    // Show or hide markers.
     toggleLabelsBtn.addEventListener('click', function () {
         labelsVisible = !labelsVisible;
 
-        markers.forEach(function (marker) {
+        markers.forEach(marker => {
             marker.setAttribute('visible', labelsVisible);
         });
 
@@ -813,13 +801,11 @@ document.addEventListener('DOMContentLoaded', function () {
             String(labelsVisible)
         );
 
-        if (!labelsVisible) {
-            closeMarkerWindow();
-        }
+        if (!labelsVisible) closeMarkerWindow();
     });
 
-    // Open the information window for a clicked marker.
-    markers.forEach(function (marker) {
+    // Click an anatomical marker to display its information.
+    markers.forEach(marker => {
         marker.addEventListener('click', function (event) {
             if (!labelsVisible) return;
 
@@ -835,17 +821,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Close button.
-    closeMarkerInfo.addEventListener('click', function () {
-        closeMarkerWindow();
-    });
+    closeMarkerInfo.addEventListener('click', closeMarkerWindow);
 
     // Reset both models.
     document.getElementById('resetButton')
         .addEventListener('click', function () {
 
             document.querySelectorAll('[drag-rotate]')
-                .forEach(function (model) {
+                .forEach(model => {
                     model.object3D.rotation.set(0, 0, 0);
                     model.object3D.scale.set(1, 1, 1);
                 });
@@ -853,10 +836,9 @@ document.addEventListener('DOMContentLoaded', function () {
             closeMarkerWindow();
         });
 
-    // Model Library navigation.
+    // Model Library.
     libraryBtn.addEventListener('click', function () {
-        const isOpen =
-            libraryPanel.style.display === 'block';
+        const isOpen = libraryPanel.style.display === 'block';
 
         libraryPanel.style.display =
             isOpen ? 'none' : 'block';
@@ -869,18 +851,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('openEarBtn')
         .addEventListener('click', function () {
+
             libraryPanel.style.display = 'none';
-
-            libraryBtn.setAttribute(
-                'aria-expanded',
-                'false'
-            );
-
+            libraryBtn.setAttribute('aria-expanded', 'false');
             selectModel('external');
         });
-
 });
-
 </script>
 
 </body>
