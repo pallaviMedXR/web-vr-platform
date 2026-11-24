@@ -1,4 +1,4 @@
-/* Quest controller interaction for holographic-lab.html (A-Frame 1.7). */
+/* Shared Quest model interaction (A-Frame 1.7). */
 AFRAME.registerComponent('quest-grab', {
     init: function () {
         this.held = null;
@@ -19,7 +19,11 @@ AFRAME.registerComponent('quest-grab', {
             this.buttons.clear();
             this.release();
         };
-        this.onReset = () => this.el.sceneEl.components['quest-lab'].reset();
+        this.onReset = () => {
+            const lab = this.el.sceneEl.components['immersive-lab'] ||
+                this.el.sceneEl.components['quest-lab'];
+            if (lab) lab.reset();
+        };
         ['triggerdown', 'gripdown'].forEach(e => this.el.addEventListener(e, this.onDown));
         ['triggerup', 'gripup'].forEach(e => this.el.addEventListener(e, this.onUp));
         this.el.addEventListener('controllerdisconnected', this.onLost);
@@ -35,11 +39,16 @@ AFRAME.registerComponent('quest-grab', {
         // Refresh now so a button press uses the current controller pose.
         ray.checkIntersections();
         const hit = ray.intersections.find(hit => {
-            const entity = hit.object.el && hit.object.el.closest('.grabbable');
-            return entity && !entity.questGrabOwner && entity.object3D.visible;
+            if (!hit.object.el) return false;
+            for (let object = hit.object; object; object = object.parent) {
+                if (!object.visible) return false;
+            }
+            return hit.object.el.closest('.grabbable, [lab-action]');
         });
         if (!hit) return;
         const entity = hit.object.el.closest('.grabbable');
+        // A panel in front of a model receives the click instead of grabbing through it.
+        if (!entity || entity.questGrabOwner) return;
         entity.questGrabOwner = this;
         this.held = entity;
         this.el.object3D.updateWorldMatrix(true, false);

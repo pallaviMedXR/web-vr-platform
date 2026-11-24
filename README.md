@@ -25,6 +25,17 @@ Open the holographic laboratory in Meta Quest Browser and select **Enter VR**.
 
 Each model can be held by one controller at a time. Leaving VR restores the desktop layout. Desktop mouse drag and scroll controls remain available outside VR.
 
-## Immersive VR layout review
+## Immersive VR laboratory
 
-The original immersive VR page (`vr-lab.html`) now includes the holographic lab's title, model headings, toolbar, open model library, anatomy information panel, and view selector as panels inside the VR scene. This version is for checking placement, text readability, and model visibility. The panels and models are static; controller interactions will be added after the layout review.
+Open `vr-lab.html` in Meta Quest Browser and select **Enter VR**. The rounded panels retain 0.7 opacity and use bundled Inter typography, with one title per viewing mode.
+
+- Point at a button and click the **trigger** to select it. Desktop users can click the same buttons with a mouse.
+- **External**, **Internal**, and **Compare Both** switch model views and update the anatomy information.
+- **Models** and **Anatomy Info** show or hide their panels. The temporal bone library entry opens both models.
+- **Show Labels** toggles specimen names. These identify the models; anatomical landmark positions have not been validated.
+- Hold **trigger or grip** while pointing at a model to grab it; move and turn the controller to inspect, then release to leave it in place. Pull the thumbstick back to bring it closer, or push forward to move it away.
+- **Reset View**, **A**, or **X** restores both models and panels.
+
+The shared controller code prevents grabbing through buttons and releases models when controller tracking or session visibility is lost. Actual headset interaction and readability still require device testing.
+
+The Inter font is bundled under the SIL Open Font License; see `assets/fonts/Inter-LICENSE.txt`. OpenAI Sans is the preferred font when installed, with Inter and system fonts as fallbacks.
