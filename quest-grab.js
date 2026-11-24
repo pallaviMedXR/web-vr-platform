@@ -7,6 +7,11 @@ AFRAME.registerComponent('quest-grab', {
         this.target = new THREE.Matrix4();
         this.local = new THREE.Matrix4();
         this.distance = new THREE.Vector3();
+        this.spinAxis = new THREE.Vector3();
+        this.spin = new THREE.Quaternion();
+        this.controllerRotation = new THREE.Quaternion();
+        this.offsetRotation = new THREE.Quaternion();
+        this.offsetScale = new THREE.Vector3();
         this.onDown = event => {
             this.buttons.add(event.type);
             this.grab();
@@ -67,15 +72,26 @@ AFRAME.registerComponent('quest-grab', {
         const gamepad = tracked && tracked.controller && tracked.controller.gamepad;
         const axes = gamepad && gamepad.axes;
         const axis = axes && axes.length >= 2 ? axes[axes.length - 1] : 0;
+        const horizontal = axes && axes.length >= 2 ? axes[axes.length - 2] : 0;
+        const seconds = THREE.MathUtils.clamp(delta || 0, 0, 50) * 0.001;
         if (Math.abs(axis) > 0.2) {
             this.distance.setFromMatrixPosition(this.offset);
             const length = this.distance.length();
             if (length > 0.001) {
                 const next = THREE.MathUtils.clamp(
-                    length - axis * Math.min(delta || 0, 50) * 0.0015, 0.25, 6
+                    length - axis * seconds * 1.5, 0.25, 6
                 );
                 this.offset.setPosition(this.distance.multiplyScalar(next / length));
             }
+        }
+        if (Math.abs(horizontal) > 0.2) {
+            // Turn around world-up at the model's own centre, even with a tilted hand.
+            this.el.object3D.getWorldQuaternion(this.controllerRotation);
+            this.spinAxis.set(0, 1, 0).applyQuaternion(this.controllerRotation.invert());
+            this.offset.decompose(this.distance, this.offsetRotation, this.offsetScale);
+            this.spin.setFromAxisAngle(this.spinAxis, horizontal * seconds * 1.5);
+            this.offsetRotation.premultiply(this.spin).normalize();
+            this.offset.compose(this.distance, this.offsetRotation, this.offsetScale);
         }
         const object = this.held.object3D;
         this.el.object3D.updateWorldMatrix(true, false);

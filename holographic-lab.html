@@ -203,7 +203,7 @@ header p {
 body.in-vr > :not(a-scene):not(script) { display: none !important; }
 </style>
 
-<script src="quest-grab.js"></script>
+<script src="quest-grab.js?v=3"></script>
 
 <script>
 let activeSpatialMode = 'compare';
@@ -608,7 +608,7 @@ AFRAME.registerComponent('holographic-marker', {
     </a-entity>
 
     <a-entity id="questHelp" visible="false" position="0 2.15 -1.8">
-        <a-text value="Point at a model + hold trigger or grip to grab\nMove and turn your controller to inspect\nThumbstick: bring closer / farther | A or X: reset"
+        <a-text value="Point at a model + hold trigger or grip to grab\nMove and turn your controller to inspect\nStick up/down: distance | Left/right: rotate | A / X: reset"
             align="center" color="#b8f3ff" width="2.3" wrap-count="65">
         </a-text>
     </a-entity>
