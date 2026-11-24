@@ -129,15 +129,18 @@ AFRAME.registerComponent('immersive-lab', {
             this.models = ['external', 'internal'].map(name => this.el.querySelector('#' + name + 'VR'));
             this.library = this.el.querySelector('#labLibrary');
             this.info = this.el.querySelector('#labAnatomyInfo');
-            this.setView('compare');
+            this.reset();
         };
         this.onEnter = () => {
+            this.releaseAll();
+            this.el.querySelector('a-camera').setAttribute('look-controls', 'enabled', true);
             document.body.classList.add('in-vr');
             this.el.querySelector('#vrOnlyTitle').setAttribute('visible', true);
             this.session = this.el.renderer.xr.getSession();
             if (this.session) this.session.addEventListener('visibilitychange', this.onVisibility);
         };
         this.onExit = () => {
+            this.el.querySelector('a-camera').setAttribute('look-controls', 'enabled', false);
             document.body.classList.remove('in-vr');
             this.el.querySelector('#vrOnlyTitle').setAttribute('visible', false);
             this.releaseAll();
@@ -154,6 +157,8 @@ AFRAME.registerComponent('immersive-lab', {
         if (this.el.hasLoaded) this.onReady();
     },
     releaseAll: function () {
+        const browser = this.el.components['browser-model-controls'];
+        if (browser) browser.endDrag();
         this.el.querySelectorAll('[quest-grab]').forEach(controller => {
             const grab = controller.components['quest-grab'];
             if (grab) grab.onLost();
@@ -209,6 +214,8 @@ AFRAME.registerComponent('immersive-lab', {
         });
         this.models.forEach(entity => entity.querySelector('[gltf-model]').classList.toggle(
             'model-hit', labObjectVisible(entity.object3D)));
+        const browser = this.el.components['browser-model-controls'];
+        if (browser) browser.selectVisible();
     },
     reset: function () {
         if (!this.ready) return;
@@ -216,8 +223,8 @@ AFRAME.registerComponent('immersive-lab', {
         this.el.querySelectorAll('.specimen-label').forEach(label => label.setAttribute('visible', false));
         this.el.querySelector('#labelsText').setAttribute('ui-text', 'value', 'Show Labels');
         this.models.forEach(entity => entity.object3D.quaternion.identity());
-        this.library.setAttribute('visible', true);
-        this.info.setAttribute('visible', true);
+        this.library.setAttribute('visible', false);
+        this.info.setAttribute('visible', false);
         this.setView('compare');
     },
     remove: function () {

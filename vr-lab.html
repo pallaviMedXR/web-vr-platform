@@ -42,6 +42,39 @@ body {
 }
 
 body.in-vr #instructions { display: none; }
+body.in-vr #browserControls { display: none; }
+a-scene canvas { touch-action: none; }
+#browserControls {
+    position: fixed;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px;
+    width: max-content;
+    max-width: calc(100% - 100px);
+    border: 1px solid rgba(66,229,255,.35);
+    border-radius: 16px;
+    background: rgba(7,28,50,.9);
+}
+#browserControls button, #browserControls select {
+    font: inherit;
+    font-size: 14px;
+    min-width: 48px;
+    min-height: 48px;
+    padding: 8px 12px;
+    border: 1px solid rgba(66,229,255,.25);
+    border-radius: 10px;
+    color: #e9faff;
+    background: #06344d;
+    cursor: pointer;
+}
+#browserControls button[aria-pressed="true"] { background: #005777; }
+#browserControls :focus-visible { outline: 2px solid #42e5ff; outline-offset: 2px; }
 
 #instructions h2 {
     margin: 0 0 6px;
@@ -122,7 +155,8 @@ AFRAME.registerComponent('vr-center-model', {
 
 </script>
 <script src="quest-grab.js?v=2"></script>
-<script src="immersive-lab.js?v=1"></script>
+<script src="immersive-lab.js?v=3"></script>
+<script src="browser-model-controls.js?v=1"></script>
 </head>
 
 <body>
@@ -131,12 +165,24 @@ AFRAME.registerComponent('vr-center-model', {
 
 <div id="instructions">
     <h2>Temporal Bone Atlas — VR</h2>
-    <p>Enter VR to explore, grab models, and use the laboratory panels</p>
+    <p>Point, hold trigger, and drag a model. Enter VR for 3D grabbing.</p>
 </div>
+
+<nav id="browserControls" aria-label="Model manipulation controls">
+    <select id="browserModel" aria-label="Model to manipulate">
+        <option value="externalVR">External</option>
+        <option value="internalVR">Internal</option>
+    </select>
+    <button type="button" data-browser-action="rotate" aria-pressed="true" title="Hold trigger and drag a model to rotate">Rotate</button>
+    <button type="button" data-browser-action="move" aria-pressed="false" title="Hold trigger and drag a model to move">Move</button>
+    <button type="button" data-browser-action="zoom-out" aria-label="Zoom out selected model">−</button>
+    <button type="button" data-browser-action="zoom-in" aria-label="Zoom in selected model">+</button>
+    <button type="button" data-browser-action="reset">Reset</button>
+</nav>
 
 <!-- Immersive VR scene -->
 
-<a-scene immersive-lab
+<a-scene immersive-lab browser-model-controls
     background="color: #061326"
     vr-mode-ui="enabled: true"
     renderer="antialias: true">
@@ -253,7 +299,7 @@ AFRAME.registerComponent('vr-center-model', {
     </a-entity>
 
     <!-- Model library, toggled with Models. -->
-    <a-entity id="labLibrary" position="-2.4 0.55 -3" rotation="0 25 0">
+    <a-entity id="labLibrary" visible="false" position="-2.4 0.55 -3" rotation="0 25 0">
         <a-plane geometry="primitive: rounded-panel" mixin="lab-panel" width="1.1" height="0.95"></a-plane>
         <a-atlas-text mixin="lab-text" value="Model library" font-size="0.062" font-weight="600" color="#42e5ff"
             align="center" width="1.3" position="0 0.35 0.015"></a-atlas-text>
@@ -267,7 +313,7 @@ AFRAME.registerComponent('vr-center-model', {
     </a-entity>
 
     <!-- Right-side anatomy information, matching the lab's initial external view. -->
-    <a-entity id="labAnatomyInfo" position="2.4 1.6 -3" rotation="0 -25 0">
+    <a-entity id="labAnatomyInfo" visible="false" position="2.4 1.6 -3" rotation="0 -25 0">
         <a-plane geometry="primitive: rounded-panel" mixin="lab-panel" width="1.35" height="1.55"></a-plane>
         <a-atlas-text mixin="lab-text" value="Anatomy information" font-size="0.062" font-weight="600" color="#42e5ff"
             align="center" width="1.45" position="0 0.61 0.015"></a-atlas-text>
@@ -327,7 +373,7 @@ AFRAME.registerComponent('vr-center-model', {
 
         <a-camera
             position="0 1.6 0"
-            look-controls="enabled: true"
+            look-controls="enabled: false"
             wasd-controls="enabled: false">
             <a-entity id="desktopCursor" cursor="rayOrigin: mouse; fuse: false" raycaster="objects: .lab-hit; interval: 50"></a-entity>
         </a-camera>

@@ -31,10 +31,14 @@ Open `vr-lab.html` in Meta Quest Browser and select **Enter VR**. The rounded pa
 
 - Point at a button and click the **trigger** to select it. Desktop users can click the same buttons with a mouse.
 - **External**, **Internal**, and **Compare Both** switch model views and update the anatomy information.
-- **Models** and **Anatomy Info** show or hide their panels. The temporal bone library entry opens both models.
+- The model library and anatomy information start closed. **Models** and **Anatomy Info** show or hide their panels. The temporal bone library entry opens both models.
 - **Show Labels** toggles specimen names. These identify the models; anatomical landmark positions have not been validated.
 - Hold **trigger or grip** while pointing at a model to grab it; move and turn the controller to inspect, then release to leave it in place. Pull the thumbstick back to bring it closer, or push forward to move it away.
-- **Reset View**, **A**, or **X** restores both models and panels.
+- **Reset View**, **A**, or **X** restores both models and closes the panels again, leaving the toolbar and view selector visible.
+
+### Manipulation in the normal browser window
+
+Outside VR, point at a model and hold the controller trigger while dragging to rotate it, or choose **Move** to reposition it across the page. Mouse and touch users can use the same drag gesture. The compact bottom controls select a model, switch Rotate/Move, zoom with **+ / −**, and reset the view. These controls are hidden in immersive VR, where tracked controller grabbing remains available. Quest Browser's windowed pointer behavior still requires a headset check.
 
 The shared controller code prevents grabbing through buttons and releases models when controller tracking or session visibility is lost. Actual headset interaction and readability still require device testing.
 
