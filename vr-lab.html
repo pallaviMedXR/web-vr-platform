@@ -3,28 +3,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Temporal Bone Atlas — Immersive VR</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Temporal Bone Atlas — Interactive VR</title>
 
 <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
 
 <style>
 body {
     margin: 0;
-    font-family: Arial, sans-serif;
     background: #061326;
+    font-family: Arial, sans-serif;
 }
 
 #instructions {
     position: fixed;
-    top: 20px;
+    top: 15px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
-    color: #e9faff;
-    background: rgba(4,20,40,.85);
-    border: 1px solid #42e5ff;
     padding: 14px 22px;
+    color: #e9faff;
+    background: rgba(4,20,40,.88);
+    border: 1px solid #42e5ff;
     border-radius: 12px;
     text-align: center;
     pointer-events: none;
@@ -32,7 +32,7 @@ body {
 
 #instructions h2 {
     margin: 0 0 6px;
-    font-size: 20px;
+    font-size: 19px;
 }
 
 #instructions p {
@@ -43,24 +43,304 @@ body {
 </style>
 
 <script>
-// Automatically centre each loaded GLB model.
+/* Centre GLB geometry */
+
 AFRAME.registerComponent('vr-center-model', {
     init: function () {
         this.el.addEventListener('model-loaded', () => {
             const mesh = this.el.getObject3D('mesh');
             if (!mesh) return;
 
-            // Centre using mesh-local coordinates.
             const box = new THREE.Box3().setFromObject(mesh);
             const center = new THREE.Vector3();
+
             box.getCenter(center);
 
-            const localCenter = this.el.object3D.worldToLocal(
+            const local = this.el.object3D.worldToLocal(
                 center.clone()
             );
 
-            mesh.position.sub(localCenter);
+            mesh.position.sub(local);
         });
+    }
+});
+
+/* VR interaction manager */
+
+AFRAME.registerComponent('vr-interaction-manager', {
+    init: function () {
+        this.models = [
+            document.getElementById('externalVR'),
+            document.getElementById('internalVR')
+        ];
+
+        this.controllers = {
+            left: document.getElementById('leftHand'),
+            right: document.getElementById('rightHand')
+        };
+
+        this.grabs = {
+            left: null,
+            right: null
+        };
+
+        this.twoHand = null;
+
+        this.raycaster = new THREE.Raycaster();
+        this.tempOrigin = new THREE.Vector3();
+        this.tempDirection = new THREE.Vector3();
+        this.tempQuaternion = new THREE.Quaternion();
+
+        ['left','right'].forEach(hand => {
+            const controller = this.controllers[hand];
+
+            controller.addEventListener('gripdown', () => {
+                this.beginGrab(hand);
+            });
+
+            controller.addEventListener('gripup', () => {
+                this.endGrab(hand);
+            });
+        });
+    },
+
+    findModel: function (hand) {
+        const controller = this.controllers[hand];
+
+        controller.object3D.getWorldPosition(
+            this.tempOrigin
+        );
+
+        controller.object3D.getWorldQuaternion(
+            this.tempQuaternion
+        );
+
+        this.tempDirection.set(0,0,-1)
+            .applyQuaternion(this.tempQuaternion)
+            .normalize();
+
+        this.raycaster.set(
+            this.tempOrigin,
+            this.tempDirection
+        );
+
+        this.raycaster.far = 5;
+
+        let nearest = null;
+        let nearestDistance = Infinity;
+
+        this.models.forEach(model => {
+            const gltf = model.querySelector('[gltf-model]');
+            const mesh = gltf && gltf.getObject3D('mesh');
+
+            if (!mesh) return;
+
+            const hits = this.raycaster.intersectObject(
+                mesh, true
+            );
+
+            if (hits.length &&
+                hits[0].distance < nearestDistance) {
+                nearest = model;
+                nearestDistance = hits[0].distance;
+            }
+        });
+
+        return nearest;
+    },
+
+    beginGrab: function (hand) {
+        const controller = this.controllers[hand];
+        const model = this.findModel(hand);
+
+        if (!model) return;
+
+        const otherHand = hand === 'left'
+            ? 'right' : 'left';
+
+        const controllerObject = controller.object3D;
+        const modelObject = model.object3D;
+
+        controllerObject.updateMatrixWorld(true);
+        modelObject.updateMatrixWorld(true);
+
+        const controllerWorld = controllerObject.matrixWorld.clone();
+        const modelWorld = modelObject.matrixWorld.clone();
+
+        const offset = controllerWorld.clone()
+            .invert()
+            .multiply(modelWorld);
+
+        this.grabs[hand] = {
+            model: model,
+            offset: offset
+        };
+
+        if (
+            this.grabs[otherHand] &&
+            this.grabs[otherHand].model === model
+        ) {
+            this.startTwoHand(model);
+        }
+    },
+
+    endGrab: function (hand) {
+        this.grabs[hand] = null;
+        this.twoHand = null;
+
+        const other = hand === 'left' ? 'right' : 'left';
+
+        if (this.grabs[other]) {
+            const model = this.grabs[other].model;
+            const controller = this.controllers[other].object3D;
+
+            controller.updateMatrixWorld(true);
+            model.object3D.updateMatrixWorld(true);
+
+            this.grabs[other].offset =
+                controller.matrixWorld.clone()
+                    .invert()
+                    .multiply(model.object3D.matrixWorld);
+        }
+    },
+
+    startTwoHand: function (model) {
+        const left = this.controllers.left.object3D;
+        const right = this.controllers.right.object3D;
+
+        const p1 = new THREE.Vector3();
+        const p2 = new THREE.Vector3();
+
+        left.getWorldPosition(p1);
+        right.getWorldPosition(p2);
+
+        const midpoint = p1.clone()
+            .add(p2).multiplyScalar(.5);
+
+        const direction = p2.clone()
+            .sub(p1).normalize();
+
+        const object = model.object3D;
+
+        this.twoHand = {
+            model: model,
+            startDistance: Math.max(
+                p1.distanceTo(p2), .01
+            ),
+            startScale: object.scale.x,
+            startPosition: object.position.clone(),
+            startQuaternion: object.quaternion.clone(),
+            startMidpoint: midpoint,
+            startDirection: direction
+        };
+    },
+
+    tick: function () {
+        const leftGrab = this.grabs.left;
+        const rightGrab = this.grabs.right;
+
+        if (
+            this.twoHand &&
+            leftGrab &&
+            rightGrab &&
+            leftGrab.model === rightGrab.model
+        ) {
+            this.updateTwoHand();
+            return;
+        }
+
+        ['left','right'].forEach(hand => {
+            const grab = this.grabs[hand];
+            if (!grab) return;
+
+            const controller =
+                this.controllers[hand].object3D;
+
+            const model = grab.model.object3D;
+
+            controller.updateMatrixWorld(true);
+
+            const targetWorld =
+                controller.matrixWorld.clone()
+                    .multiply(grab.offset);
+
+            const parent = model.parent;
+
+            parent.updateMatrixWorld(true);
+
+            const targetLocal =
+                parent.matrixWorld.clone()
+                    .invert()
+                    .multiply(targetWorld);
+
+            const position = new THREE.Vector3();
+            const quaternion = new THREE.Quaternion();
+            const scale = new THREE.Vector3();
+
+            targetLocal.decompose(
+                position, quaternion, scale
+            );
+
+            model.position.copy(position);
+            model.quaternion.copy(quaternion);
+        });
+    },
+
+    updateTwoHand: function () {
+        const data = this.twoHand;
+
+        const left = this.controllers.left.object3D;
+        const right = this.controllers.right.object3D;
+
+        const p1 = new THREE.Vector3();
+        const p2 = new THREE.Vector3();
+
+        left.getWorldPosition(p1);
+        right.getWorldPosition(p2);
+
+        const midpoint = p1.clone()
+            .add(p2).multiplyScalar(.5);
+
+        const direction = p2.clone()
+            .sub(p1).normalize();
+
+        const distance = p1.distanceTo(p2);
+
+        const factor = THREE.MathUtils.clamp(
+            distance / data.startDistance,
+            .3,
+            4
+        );
+
+        const scale = THREE.MathUtils.clamp(
+            data.startScale * factor,
+            .25,
+            4
+        );
+
+        const rotation = new THREE.Quaternion()
+            .setFromUnitVectors(
+                data.startDirection,
+                direction
+            );
+
+        const object = data.model.object3D;
+
+        object.scale.setScalar(scale);
+
+        object.quaternion.copy(
+            rotation.clone()
+                .multiply(data.startQuaternion)
+        );
+
+        const offset = data.startPosition.clone()
+            .sub(data.startMidpoint)
+            .multiplyScalar(scale / data.startScale)
+            .applyQuaternion(rotation);
+
+        object.position.copy(
+            midpoint.clone().add(offset)
+        );
     }
 });
 </script>
@@ -70,23 +350,23 @@ AFRAME.registerComponent('vr-center-model', {
 
 <div id="instructions">
     <h2>Temporal Bone Atlas — VR</h2>
-    <p>Enter VR to explore the anatomical models</p>
+    <p>Point at a model + hold Grip to grab · Use both Grips to resize</p>
 </div>
 
 <a-scene
-    background="color: #061326"
-    vr-mode-ui="enabled: true"
-    renderer="antialias: true">
+    background="color:#061326"
+    vr-mode-ui="enabled:true"
+    renderer="antialias:true">
 
     <!-- Virtual environment -->
+
     <a-sky color="#061326"></a-sky>
 
-    <!-- Subtle holographic floor -->
     <a-circle
         position="0 0 -2.5"
         rotation="-90 0 0"
         radius="2.5"
-        material="color: #06344d; opacity: 0.45; transparent: true; side: double">
+        material="color:#06344d;opacity:.45;transparent:true;side:double">
     </a-circle>
 
     <a-ring
@@ -94,11 +374,15 @@ AFRAME.registerComponent('vr-center-model', {
         rotation="-90 0 0"
         radius-inner="1.8"
         radius-outer="1.82"
-        material="color: #42e5ff; opacity: 0.65; transparent: true; side: double">
+        material="color:#42e5ff;opacity:.65;transparent:true;side:double">
     </a-ring>
 
     <!-- External temporal bone -->
-    <a-entity position="-0.65 1.5 -2.5">
+
+    <a-entity
+        id="externalVR"
+        position="-0.65 1.5 -2.5">
+
         <a-entity
             gltf-model="url(ear_model_1_cleaned.glb)"
             scale="10 10 10"
@@ -107,7 +391,11 @@ AFRAME.registerComponent('vr-center-model', {
     </a-entity>
 
     <!-- Internal temporal bone -->
-    <a-entity position="0.65 1.5 -2.5">
+
+    <a-entity
+        id="internalVR"
+        position="0.65 1.5 -2.5">
+
         <a-entity
             gltf-model="url(ear-model-2.glb)"
             scale="1 1 1"
@@ -116,30 +404,41 @@ AFRAME.registerComponent('vr-center-model', {
     </a-entity>
 
     <!-- Lighting -->
-    <a-entity light="type: ambient; intensity: 1"></a-entity>
 
     <a-entity
-        light="type: directional; intensity: 0.8"
+        light="type:ambient;intensity:1">
+    </a-entity>
+
+    <a-entity
+        light="type:directional;intensity:.8"
         position="1 4 2">
     </a-entity>
 
-    <!-- VR camera -->
+    <!-- Camera and Quest controllers -->
+
     <a-entity id="rig">
+
         <a-camera
             position="0 1.6 0"
-            look-controls="enabled: true"
-            wasd-controls="enabled: false">
+            look-controls="enabled:true"
+            wasd-controls="enabled:false">
         </a-camera>
 
-        <!-- Quest controllers -->
         <a-entity
-            laser-controls="hand: left">
+            id="leftHand"
+            laser-controls="hand:left">
         </a-entity>
 
         <a-entity
-            laser-controls="hand: right">
+            id="rightHand"
+            laser-controls="hand:right">
         </a-entity>
+
     </a-entity>
+
+    <!-- VR interaction system -->
+
+    <a-entity vr-interaction-manager></a-entity>
 
 </a-scene>
 
