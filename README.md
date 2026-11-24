@@ -24,3 +24,7 @@ Open the holographic laboratory in Meta Quest Browser and select **Enter VR**.
 - Press **A** (right controller) or **X** (left controller) to reset both models in front of you.
 
 Each model can be held by one controller at a time. Leaving VR restores the desktop layout. Desktop mouse drag and scroll controls remain available outside VR.
+
+## Immersive VR layout review
+
+The original immersive VR page (`vr-lab.html`) now includes the holographic lab's title, model headings, toolbar, open model library, anatomy information panel, and view selector as panels inside the VR scene. This version is for checking placement, text readability, and model visibility. The panels and models are static; controller interactions will be added after the layout review.
