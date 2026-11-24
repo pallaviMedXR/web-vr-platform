@@ -150,15 +150,15 @@ AFRAME.registerComponent('gold-marker', {
     <a-circle
         position="0 0 -2.5"
         rotation="-90 0 0"
-        radius="2.5"
+        radius="1.8"
         material="color: #06344d; opacity: 0.45; transparent: true; side: double">
     </a-circle>
 
     <a-ring
         position="0 0.01 -2.5"
         rotation="-90 0 0"
-        radius-inner="1.8"
-        radius-outer="1.82"
+        radius-inner="1.65"
+        radius-outer="1.67"
         material="color: #42e5ff; opacity: 0.65; transparent: true; side: double">
     </a-ring>
 
@@ -199,28 +199,6 @@ AFRAME.registerComponent('gold-marker', {
             gltf-model="url(ear_model_1_cleaned.glb)"
             scale="10 10 10"
             vr-center-model>
-
-            <!-- Existing gold anatomical markers -->
-
-            <a-entity
-                position="-0.1485 -0.0183 0.2546"
-                gold-marker>
-
-                <a-sphere
-                    radius="0.01"
-                    material="shader: flat; color: #F4C76B">
-                </a-sphere>
-            </a-entity>
-
-            <a-entity
-                position="-0.0508 0.2604 0.0151"
-                gold-marker>
-
-                <a-sphere
-                    radius="0.01"
-                    material="shader: flat; color: #F4C76B">
-                </a-sphere>
-            </a-entity>
 
         </a-entity>
     </a-entity>
@@ -315,8 +293,8 @@ AFRAME.registerComponent('gold-marker', {
 
     <!-- Anatomy Information panel -->
 
-    <a-entity position="1.85 1.65 -3.1"
-              rotation="0 -15 0">
+    <a-entity position="2.1 1.65 -3.5"
+              rotation="0 -25 0">
 
         <a-plane
             width="1.25"
