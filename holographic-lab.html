@@ -200,7 +200,10 @@ header p {
     #bottomBar { bottom: 10px; }
     #hint { display: none; }
 }
+body.in-vr > :not(a-scene):not(script) { display: none !important; }
 </style>
+
+<script src="quest-grab.js"></script>
 
 <script>
 let activeSpatialMode = 'compare';
@@ -212,7 +215,7 @@ AFRAME.registerComponent('center-model', {
             const mesh = this.el.getObject3D('mesh');
             if (!mesh) return;
 
-            this.el.object3D.updateMatrixWorld(true);
+            this.el.object3D.updateWorldMatrix(true, true);
 
             const box = new THREE.Box3().setFromObject(mesh);
             const center = new THREE.Vector3();
@@ -237,6 +240,7 @@ AFRAME.registerComponent('drag-rotate', {
         const qy = new THREE.Quaternion();
 
         this.down = e => {
+            if (this.el.sceneEl.is('vr-mode')) return;
             if (e.button !== 0) return;
             if (e.target.closest(
                 'button,#toolbar,#bottomBar,#anatomyInfo,#markerInfo,#libraryPanel'
@@ -297,6 +301,7 @@ AFRAME.registerComponent('zoom-model', {
             .indexOf(this.el);
 
         this.wheel = e => {
+            if (this.el.sceneEl.is('vr-mode')) return;
             if (e.target.closest(
                 'button,#toolbar,#bottomBar,#anatomyInfo,#markerInfo,#libraryPanel'
             )) return;
@@ -421,12 +426,12 @@ AFRAME.registerComponent('holographic-marker', {
     <span>Internal View</span>
 </div>
 
-<a-scene embedded
+<a-scene embedded quest-lab
     style="position:fixed;inset:0;width:100%;height:100%;z-index:1"
     renderer="alpha: true"
     background="transparent: true">
 
-    <a-entity id="externalModel"
+    <a-entity id="externalModel" class="grabbable"
         drag-rotate zoom-model position="-1.5 3 -3">
 
         <a-entity
@@ -574,7 +579,7 @@ AFRAME.registerComponent('holographic-marker', {
     </a-entity>
 
     <!-- Internal model -->
-    <a-entity id="internalModel"
+    <a-entity id="internalModel" class="grabbable"
         drag-rotate zoom-model position="1.5 3 -3">
 
         <a-entity
@@ -584,7 +589,7 @@ AFRAME.registerComponent('holographic-marker', {
         </a-entity>
     </a-entity>
 
-    <a-entity position="0 1.6 0">
+    <a-entity id="cameraRig" position="0 1.6 0">
         <a-camera
             look-controls="enabled:false"
             wasd-controls="enabled:false">
@@ -594,6 +599,18 @@ AFRAME.registerComponent('holographic-marker', {
                 raycaster="objects:.marker-hitbox">
             </a-entity>
         </a-camera>
+        <a-entity laser-controls="hand: left" quest-grab
+            raycaster="objects: .grabbable [gltf-model]; far: 8; interval: 50; lineColor: #42e5ff">
+        </a-entity>
+        <a-entity laser-controls="hand: right" quest-grab
+            raycaster="objects: .grabbable [gltf-model]; far: 8; interval: 50; lineColor: #42e5ff">
+        </a-entity>
+    </a-entity>
+
+    <a-entity id="questHelp" visible="false" position="0 2.15 -1.8">
+        <a-text value="Point at a model + hold trigger or grip to grab\nMove and turn your controller to inspect\nThumbstick: bring closer / farther | A or X: reset"
+            align="center" color="#b8f3ff" width="2.3" wrap-count="65">
+        </a-text>
     </a-entity>
 </a-scene>
 
@@ -705,6 +722,7 @@ function getModelCenterOffset(entity) {
 }
 
 function animateSpatialLayout(mode) {
+    if (document.querySelector('a-scene').is('vr-mode')) return;
     const layout = spatialLayouts[mode];
     if (!layout) return;
 
