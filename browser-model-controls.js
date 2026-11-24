@@ -2,13 +2,9 @@
 AFRAME.registerComponent('browser-model-controls', {
     init: function () {
         this.drag = null;
-        this.mode = 'rotate';
+        this.rotationEnabled = true;
         this.ray = new THREE.Raycaster();
         this.pointer = new THREE.Vector2();
-        this.plane = new THREE.Plane();
-        this.point = new THREE.Vector3();
-        this.normal = new THREE.Vector3();
-        this.worldPosition = new THREE.Vector3();
         this.cameraQ = new THREE.Quaternion();
         this.right = new THREE.Vector3();
         this.up = new THREE.Vector3();
@@ -17,7 +13,7 @@ AFRAME.registerComponent('browser-model-controls', {
         this.controls = document.getElementById('browserControls');
         this.selector = document.getElementById('browserModel');
         this.onDown = event => {
-            if (this.el.is('vr-mode') || this.drag || event.button !== 0) return;
+            if (this.el.is('vr-mode') || this.drag || !this.rotationEnabled || event.button !== 0) return;
             this.updateRay(event);
             const targets = [...this.el.querySelectorAll('.model-hit, .lab-hit')].map(e => e.object3D);
             this.el.object3D.updateMatrixWorld(true);
@@ -25,12 +21,7 @@ AFRAME.registerComponent('browser-model-controls', {
             const model = hit && hit.object.el && hit.object.el.closest('.grabbable');
             if (!model) return; // Buttons use their normal cursor click handler.
             this.selectModel(model);
-            this.el.camera.getWorldDirection(this.normal);
-            model.object3D.getWorldPosition(this.worldPosition);
-            this.plane.setFromNormalAndCoplanarPoint(this.normal, this.worldPosition);
-            if (!this.ray.ray.intersectPlane(this.plane, this.point)) return;
-            this.drag = {model, id: event.pointerId, x: event.clientX, y: event.clientY,
-                point: this.point.clone()};
+            this.drag = {model, id: event.pointerId, x: event.clientX, y: event.clientY};
             this.canvas.setPointerCapture(event.pointerId);
             this.canvas.style.cursor = 'grabbing';
             event.preventDefault();
@@ -40,21 +31,12 @@ AFRAME.registerComponent('browser-model-controls', {
             if (!drag || event.pointerId !== drag.id) return;
             if (this.el.is('vr-mode')) { this.endDrag(); return; }
             const object = drag.model.object3D;
-            if (this.mode === 'move') {
-                this.updateRay(event);
-                if (this.ray.ray.intersectPlane(this.plane, this.point)) {
-                    object.getWorldPosition(this.worldPosition).add(this.point).sub(drag.point);
-                    object.position.copy(object.parent.worldToLocal(this.worldPosition));
-                    drag.point.copy(this.point);
-                }
-            } else {
-                this.el.camera.getWorldQuaternion(this.cameraQ);
-                this.right.set(1, 0, 0).applyQuaternion(this.cameraQ);
-                this.up.set(0, 1, 0).applyQuaternion(this.cameraQ);
-                this.qx.setFromAxisAngle(this.right, (event.clientY - drag.y) * 0.008);
-                this.qy.setFromAxisAngle(this.up, (event.clientX - drag.x) * 0.008);
-                object.quaternion.premultiply(this.qx).premultiply(this.qy).normalize();
-            }
+            this.el.camera.getWorldQuaternion(this.cameraQ);
+            this.right.set(1, 0, 0).applyQuaternion(this.cameraQ);
+            this.up.set(0, 1, 0).applyQuaternion(this.cameraQ);
+            this.qx.setFromAxisAngle(this.right, (event.clientY - drag.y) * 0.008);
+            this.qy.setFromAxisAngle(this.up, (event.clientX - drag.x) * 0.008);
+            object.quaternion.premultiply(this.qx).premultiply(this.qy).normalize();
             drag.x = event.clientX;
             drag.y = event.clientY;
             event.preventDefault();
@@ -71,11 +53,11 @@ AFRAME.registerComponent('browser-model-controls', {
             if (!button || this.el.is('vr-mode')) return;
             const action = button.dataset.browserAction;
             this.endDrag();
-            if (action === 'rotate' || action === 'move') {
-                this.mode = action;
+            if (action === 'rotate') {
+                this.rotationEnabled = !this.rotationEnabled;
                 this.updateButtons();
             } else if (action === 'reset') {
-                this.mode = 'rotate';
+                this.rotationEnabled = true;
                 this.el.components['immersive-lab'].reset();
                 this.selectModel(this.el.querySelector('#externalVR'));
                 this.updateButtons();
@@ -127,8 +109,8 @@ AFRAME.registerComponent('browser-model-controls', {
         }
     },
     updateButtons: function () {
-        this.controls.querySelectorAll('[data-browser-action="rotate"], [data-browser-action="move"]').forEach(button => {
-            button.setAttribute('aria-pressed', String(button.dataset.browserAction === this.mode));
+        this.controls.querySelectorAll('[data-browser-action="rotate"]').forEach(button => {
+            button.setAttribute('aria-pressed', String(this.rotationEnabled));
         });
     },
     endDrag: function () {

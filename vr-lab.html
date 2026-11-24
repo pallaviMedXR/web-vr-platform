@@ -45,21 +45,29 @@ body.in-vr #instructions { display: none; }
 body.in-vr #browserControls { display: none; }
 a-scene canvas { touch-action: none; }
 #browserControls {
+    display: contents;
+}
+.browser-panel {
     position: fixed;
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
     z-index: 20;
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
     gap: 6px;
     padding: 8px;
     width: max-content;
-    max-width: calc(100% - 100px);
     border: 1px solid rgba(66,229,255,.35);
     border-radius: 16px;
-    background: rgba(7,28,50,.9);
+    background: rgba(7,28,50,.7);
+}
+#browserTools {
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    flex-direction: column;
+}
+#browserSelection {
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 #browserControls button, #browserControls select {
     font: inherit;
@@ -156,7 +164,7 @@ AFRAME.registerComponent('vr-center-model', {
 </script>
 <script src="quest-grab.js?v=2"></script>
 <script src="immersive-lab.js?v=3"></script>
-<script src="browser-model-controls.js?v=1"></script>
+<script src="browser-model-controls.js?v=2"></script>
 </head>
 
 <body>
@@ -169,15 +177,18 @@ AFRAME.registerComponent('vr-center-model', {
 </div>
 
 <nav id="browserControls" aria-label="Model manipulation controls">
-    <select id="browserModel" aria-label="Model to manipulate">
-        <option value="externalVR">External</option>
-        <option value="internalVR">Internal</option>
-    </select>
-    <button type="button" data-browser-action="rotate" aria-pressed="true" title="Hold trigger and drag a model to rotate">Rotate</button>
-    <button type="button" data-browser-action="move" aria-pressed="false" title="Hold trigger and drag a model to move">Move</button>
-    <button type="button" data-browser-action="zoom-out" aria-label="Zoom out selected model">−</button>
-    <button type="button" data-browser-action="zoom-in" aria-label="Zoom in selected model">+</button>
-    <button type="button" data-browser-action="reset">Reset</button>
+    <div id="browserTools" class="browser-panel" role="group" aria-label="Rotation and zoom">
+        <button type="button" data-browser-action="rotate" aria-pressed="true" title="Toggle drag rotation">Rotate</button>
+        <button type="button" data-browser-action="zoom-out" aria-label="Zoom out selected model">−</button>
+        <button type="button" data-browser-action="zoom-in" aria-label="Zoom in selected model">+</button>
+    </div>
+    <div id="browserSelection" class="browser-panel" role="group" aria-label="Model selection and reset">
+        <select id="browserModel" aria-label="Model to manipulate">
+            <option value="externalVR">External</option>
+            <option value="internalVR">Internal</option>
+        </select>
+        <button type="button" data-browser-action="reset">Reset</button>
+    </div>
 </nav>
 
 <!-- Immersive VR scene -->
