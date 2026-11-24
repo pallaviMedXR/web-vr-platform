@@ -1,7 +1,13 @@
 # web-vr-platform
 Interactive 3D Anatomy Atlas featuring photogrammetry-based temporal bone models, holographic visualisation, anatomical landmarks, and interactive 3D exploration. Built with A-Frame and WebXR-ready web technologies.
 
-## Open the atlas
+## Main webpage
+
+### [Launch Temporal Bone Atlas — VR](https://pallavimedxr.github.io/web-vr-platform/vr-lab.html)
+
+**Start here:** open the atlas in your desktop browser or Meta Quest Browser. On Quest, select **Enter VR** for immersive exploration and controller interaction.
+
+## All available pages
 
 Open these live GitHub Pages links in your desktop or Meta Quest browser:
 
@@ -9,10 +15,10 @@ Open these live GitHub Pages links in your desktop or Meta Quest browser:
 | --- | --- |
 | Desktop anatomy atlas | [Open desktop atlas](https://pallavimedxr.github.io/web-vr-platform/index.html) |
 | Holographic laboratory | [Open holographic lab](https://pallavimedxr.github.io/web-vr-platform/holographic-lab.html) |
-| Original immersive VR | [Open original VR](https://pallavimedxr.github.io/web-vr-platform/vr-lab.html) |
+| **Main immersive VR lab** | **[Open main webpage](https://pallavimedxr.github.io/web-vr-platform/vr-lab.html)** |
 | VR preview — Quest testing | [Open VR preview](https://pallavimedxr.github.io/web-vr-platform/vr-lab-preview.html) |
 
-GitHub Pages currently publishes the `testing-quest-integration` branch. To test the preview on Quest, open its link in Meta Quest Browser and select **Enter VR**.
+GitHub Pages publishes the `main` branch. The main webpage is `vr-lab.html`; the other pages remain available through the links above.
 
 ## Holographic lab on Quest
 
