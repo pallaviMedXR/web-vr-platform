@@ -3,8 +3,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Temporal Bone Atlas — Interactive VR</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Temporal Bone Atlas — Immersive VR</title>
 
 <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
 
@@ -17,15 +18,15 @@ body {
 
 #instructions {
     position: fixed;
-    top: 15px;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10;
     padding: 14px 22px;
-    color: #e9faff;
-    background: rgba(4,20,40,.88);
+    background: rgba(4,20,40,0.9);
     border: 1px solid #42e5ff;
     border-radius: 12px;
+    color: #e9faff;
     text-align: center;
     pointer-events: none;
 }
@@ -40,35 +41,76 @@ body {
     font-size: 13px;
     color: #9ac5d8;
 }
+
+#status {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #F4C76B;
+    background: rgba(4,20,40,0.85);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    z-index: 10;
+}
 </style>
 
 <script>
-/* Centre GLB geometry */
 
-AFRAME.registerComponent('vr-center-model', {
+/* ----------------------------------
+   AUTOMATIC MODEL CENTRING AND SIZING
+---------------------------------- */
+
+AFRAME.registerComponent('vr-fit-model', {
+    schema: {
+        size: {type: 'number', default: 0.55}
+    },
+
     init: function () {
         this.el.addEventListener('model-loaded', () => {
+
             const mesh = this.el.getObject3D('mesh');
             if (!mesh) return;
 
+            mesh.updateMatrixWorld(true);
+
             const box = new THREE.Box3().setFromObject(mesh);
+
             const center = new THREE.Vector3();
+            const dimensions = new THREE.Vector3();
 
             box.getCenter(center);
+            box.getSize(dimensions);
 
-            const local = this.el.object3D.worldToLocal(
-                center.clone()
+            const maxDimension = Math.max(
+                dimensions.x,
+                dimensions.y,
+                dimensions.z
             );
 
-            mesh.position.sub(local);
+            if (maxDimension <= 0) return;
+
+            const scale = this.data.size / maxDimension;
+
+            // Apply centring and scaling to the mesh.
+            mesh.position.sub(center);
+            mesh.scale.setScalar(scale);
+
+            this.el.emit('model-ready');
         });
     }
 });
 
-/* VR interaction manager */
 
-AFRAME.registerComponent('vr-interaction-manager', {
+/* ----------------------------------
+   QUEST CONTROLLER INTERACTIONS
+---------------------------------- */
+
+AFRAME.registerComponent('quest-interactions', {
+
     init: function () {
+
         this.models = [
             document.getElementById('externalVR'),
             document.getElementById('internalVR')
@@ -87,60 +129,74 @@ AFRAME.registerComponent('vr-interaction-manager', {
         this.twoHand = null;
 
         this.raycaster = new THREE.Raycaster();
-        this.tempOrigin = new THREE.Vector3();
-        this.tempDirection = new THREE.Vector3();
+
+        this.tempPosition = new THREE.Vector3();
         this.tempQuaternion = new THREE.Quaternion();
+        this.tempDirection = new THREE.Vector3();
 
-        ['left','right'].forEach(hand => {
-            const controller = this.controllers[hand];
+        this.controllers.left.addEventListener(
+            'gripdown',
+            () => this.startGrab('left')
+        );
 
-            controller.addEventListener('gripdown', () => {
-                this.beginGrab(hand);
-            });
+        this.controllers.left.addEventListener(
+            'gripup',
+            () => this.stopGrab('left')
+        );
 
-            controller.addEventListener('gripup', () => {
-                this.endGrab(hand);
-            });
-        });
+        this.controllers.right.addEventListener(
+            'gripdown',
+            () => this.startGrab('right')
+        );
+
+        this.controllers.right.addEventListener(
+            'gripup',
+            () => this.stopGrab('right')
+        );
     },
 
-    findModel: function (hand) {
-        const controller = this.controllers[hand];
 
-        controller.object3D.getWorldPosition(
-            this.tempOrigin
-        );
+    /* Find the anatomical model */
 
-        controller.object3D.getWorldQuaternion(
-            this.tempQuaternion
-        );
+    findTarget: function (hand) {
 
-        this.tempDirection.set(0,0,-1)
+        const controller = this.controllers[hand].object3D;
+
+        controller.getWorldPosition(this.tempPosition);
+        controller.getWorldQuaternion(this.tempQuaternion);
+
+        this.tempDirection.set(0, 0, -1)
             .applyQuaternion(this.tempQuaternion)
             .normalize();
 
         this.raycaster.set(
-            this.tempOrigin,
+            this.tempPosition,
             this.tempDirection
         );
 
-        this.raycaster.far = 5;
+        this.raycaster.far = 6;
 
         let nearest = null;
         let nearestDistance = Infinity;
 
         this.models.forEach(model => {
+
             const gltf = model.querySelector('[gltf-model]');
             const mesh = gltf && gltf.getObject3D('mesh');
 
             if (!mesh) return;
 
+            mesh.updateMatrixWorld(true);
+
             const hits = this.raycaster.intersectObject(
-                mesh, true
+                mesh,
+                true
             );
 
-            if (hits.length &&
-                hits[0].distance < nearestDistance) {
+            if (
+                hits.length > 0 &&
+                hits[0].distance < nearestDistance
+            ) {
                 nearest = model;
                 nearestDistance = hits[0].distance;
             }
@@ -149,27 +205,26 @@ AFRAME.registerComponent('vr-interaction-manager', {
         return nearest;
     },
 
-    beginGrab: function (hand) {
-        const controller = this.controllers[hand];
-        const model = this.findModel(hand);
+
+    /* Begin grabbing */
+
+    startGrab: function (hand) {
+
+        const controller = this.controllers[hand].object3D;
+        const model = this.findTarget(hand);
 
         if (!model) return;
 
         const otherHand = hand === 'left'
-            ? 'right' : 'left';
+            ? 'right'
+            : 'left';
 
-        const controllerObject = controller.object3D;
-        const modelObject = model.object3D;
+        controller.updateMatrixWorld(true);
+        model.object3D.updateMatrixWorld(true);
 
-        controllerObject.updateMatrixWorld(true);
-        modelObject.updateMatrixWorld(true);
-
-        const controllerWorld = controllerObject.matrixWorld.clone();
-        const modelWorld = modelObject.matrixWorld.clone();
-
-        const offset = controllerWorld.clone()
+        const offset = controller.matrixWorld.clone()
             .invert()
-            .multiply(modelWorld);
+            .multiply(model.object3D.matrixWorld);
 
         this.grabs[hand] = {
             model: model,
@@ -180,31 +235,45 @@ AFRAME.registerComponent('vr-interaction-manager', {
             this.grabs[otherHand] &&
             this.grabs[otherHand].model === model
         ) {
-            this.startTwoHand(model);
+            this.beginTwoHand(model);
         }
+
+        console.log('Grabbed:', model.id);
     },
 
-    endGrab: function (hand) {
+
+    /* Release model */
+
+    stopGrab: function (hand) {
+
         this.grabs[hand] = null;
         this.twoHand = null;
 
-        const other = hand === 'left' ? 'right' : 'left';
+        const otherHand = hand === 'left'
+            ? 'right'
+            : 'left';
 
-        if (this.grabs[other]) {
-            const model = this.grabs[other].model;
-            const controller = this.controllers[other].object3D;
+        if (this.grabs[otherHand]) {
+
+            const model = this.grabs[otherHand].model;
+            const controller =
+                this.controllers[otherHand].object3D;
 
             controller.updateMatrixWorld(true);
             model.object3D.updateMatrixWorld(true);
 
-            this.grabs[other].offset =
+            this.grabs[otherHand].offset =
                 controller.matrixWorld.clone()
                     .invert()
                     .multiply(model.object3D.matrixWorld);
         }
     },
 
-    startTwoHand: function (model) {
+
+    /* Start two-handed scaling */
+
+    beginTwoHand: function (model) {
+
         const left = this.controllers.left.object3D;
         const right = this.controllers.right.object3D;
 
@@ -215,27 +284,31 @@ AFRAME.registerComponent('vr-interaction-manager', {
         right.getWorldPosition(p2);
 
         const midpoint = p1.clone()
-            .add(p2).multiplyScalar(.5);
+            .add(p2)
+            .multiplyScalar(0.5);
 
         const direction = p2.clone()
-            .sub(p1).normalize();
+            .sub(p1)
+            .normalize();
 
         const object = model.object3D;
 
         this.twoHand = {
             model: model,
-            startDistance: Math.max(
-                p1.distanceTo(p2), .01
-            ),
-            startScale: object.scale.x,
-            startPosition: object.position.clone(),
-            startQuaternion: object.quaternion.clone(),
-            startMidpoint: midpoint,
-            startDirection: direction
+            distance: Math.max(p1.distanceTo(p2), 0.01),
+            scale: object.scale.x,
+            position: object.position.clone(),
+            quaternion: object.quaternion.clone(),
+            midpoint: midpoint,
+            direction: direction
         };
     },
 
+
+    /* Update controller movement */
+
     tick: function () {
+
         const leftGrab = this.grabs.left;
         const rightGrab = this.grabs.right;
 
@@ -249,44 +322,45 @@ AFRAME.registerComponent('vr-interaction-manager', {
             return;
         }
 
-        ['left','right'].forEach(hand => {
+        ['left', 'right'].forEach(hand => {
+
             const grab = this.grabs[hand];
             if (!grab) return;
 
-            const controller =
-                this.controllers[hand].object3D;
-
-            const model = grab.model.object3D;
+            const controller = this.controllers[hand].object3D;
+            const object = grab.model.object3D;
 
             controller.updateMatrixWorld(true);
 
-            const targetWorld =
-                controller.matrixWorld.clone()
-                    .multiply(grab.offset);
+            const worldMatrix = controller.matrixWorld.clone()
+                .multiply(grab.offset);
 
-            const parent = model.parent;
+            const parentMatrix = object.parent.matrixWorld
+                .clone()
+                .invert();
 
-            parent.updateMatrixWorld(true);
-
-            const targetLocal =
-                parent.matrixWorld.clone()
-                    .invert()
-                    .multiply(targetWorld);
+            const localMatrix = parentMatrix.multiply(worldMatrix);
 
             const position = new THREE.Vector3();
             const quaternion = new THREE.Quaternion();
             const scale = new THREE.Vector3();
 
-            targetLocal.decompose(
-                position, quaternion, scale
+            localMatrix.decompose(
+                position,
+                quaternion,
+                scale
             );
 
-            model.position.copy(position);
-            model.quaternion.copy(quaternion);
+            object.position.copy(position);
+            object.quaternion.copy(quaternion);
         });
     },
 
+
+    /* Two-handed resizing */
+
     updateTwoHand: function () {
+
         const data = this.twoHand;
 
         const left = this.controllers.left.object3D;
@@ -299,28 +373,30 @@ AFRAME.registerComponent('vr-interaction-manager', {
         right.getWorldPosition(p2);
 
         const midpoint = p1.clone()
-            .add(p2).multiplyScalar(.5);
+            .add(p2)
+            .multiplyScalar(0.5);
 
         const direction = p2.clone()
-            .sub(p1).normalize();
+            .sub(p1)
+            .normalize();
 
         const distance = p1.distanceTo(p2);
 
         const factor = THREE.MathUtils.clamp(
-            distance / data.startDistance,
-            .3,
+            distance / data.distance,
+            0.3,
             4
         );
 
         const scale = THREE.MathUtils.clamp(
-            data.startScale * factor,
-            .25,
+            data.scale * factor,
+            0.25,
             4
         );
 
         const rotation = new THREE.Quaternion()
             .setFromUnitVectors(
-                data.startDirection,
+                data.direction,
                 direction
             );
 
@@ -329,13 +405,12 @@ AFRAME.registerComponent('vr-interaction-manager', {
         object.scale.setScalar(scale);
 
         object.quaternion.copy(
-            rotation.clone()
-                .multiply(data.startQuaternion)
+            rotation.clone().multiply(data.quaternion)
         );
 
-        const offset = data.startPosition.clone()
-            .sub(data.startMidpoint)
-            .multiplyScalar(scale / data.startScale)
+        const offset = data.position.clone()
+            .sub(data.midpoint)
+            .multiplyScalar(scale / data.scale)
             .applyQuaternion(rotation);
 
         object.position.copy(
@@ -343,6 +418,7 @@ AFRAME.registerComponent('vr-interaction-manager', {
         );
     }
 });
+
 </script>
 </head>
 
@@ -350,15 +426,19 @@ AFRAME.registerComponent('vr-interaction-manager', {
 
 <div id="instructions">
     <h2>Temporal Bone Atlas — VR</h2>
-    <p>Point at a model + hold Grip to grab · Use both Grips to resize</p>
+    <p>Point at a model and hold Grip to move it. Use both Grips to resize.</p>
+</div>
+
+<div id="status">
+    Quest 3 Interactive Anatomy Laboratory
 </div>
 
 <a-scene
-    background="color:#061326"
-    vr-mode-ui="enabled:true"
-    renderer="antialias:true">
+    background="color: #061326"
+    vr-mode-ui="enabled: true"
+    renderer="antialias: true">
 
-    <!-- Virtual environment -->
+    <!-- Holographic environment -->
 
     <a-sky color="#061326"></a-sky>
 
@@ -366,7 +446,7 @@ AFRAME.registerComponent('vr-interaction-manager', {
         position="0 0 -2.5"
         rotation="-90 0 0"
         radius="2.5"
-        material="color:#06344d;opacity:.45;transparent:true;side:double">
+        material="color: #06344d; opacity: 0.45; transparent: true; side: double">
     </a-circle>
 
     <a-ring
@@ -374,71 +454,76 @@ AFRAME.registerComponent('vr-interaction-manager', {
         rotation="-90 0 0"
         radius-inner="1.8"
         radius-outer="1.82"
-        material="color:#42e5ff;opacity:.65;transparent:true;side:double">
+        material="color: #42e5ff; opacity: 0.65; transparent: true; side: double">
     </a-ring>
+
 
     <!-- External temporal bone -->
 
     <a-entity
         id="externalVR"
-        position="-0.65 1.5 -2.5">
+        position="-0.55 1.5 -2.2">
 
         <a-entity
             gltf-model="url(ear_model_1_cleaned.glb)"
-            scale="10 10 10"
-            vr-center-model>
+            vr-fit-model="size: 0.6">
         </a-entity>
+
     </a-entity>
+
 
     <!-- Internal temporal bone -->
 
     <a-entity
         id="internalVR"
-        position="0.65 1.5 -2.5">
+        position="0.55 1.5 -2.2">
 
         <a-entity
             gltf-model="url(ear-model-2.glb)"
-            scale="1 1 1"
-            vr-center-model>
+            vr-fit-model="size: 0.6">
         </a-entity>
+
     </a-entity>
+
 
     <!-- Lighting -->
 
     <a-entity
-        light="type:ambient;intensity:1">
+        light="type: ambient; intensity: 1">
     </a-entity>
 
     <a-entity
-        light="type:directional;intensity:.8"
+        light="type: directional; intensity: 0.8"
         position="1 4 2">
     </a-entity>
 
-    <!-- Camera and Quest controllers -->
+
+    <!-- VR camera and controllers -->
 
     <a-entity id="rig">
 
         <a-camera
             position="0 1.6 0"
-            look-controls="enabled:true"
-            wasd-controls="enabled:false">
+            look-controls="enabled: true"
+            wasd-controls="enabled: false">
         </a-camera>
 
         <a-entity
             id="leftHand"
-            laser-controls="hand:left">
+            laser-controls="hand: left">
         </a-entity>
 
         <a-entity
             id="rightHand"
-            laser-controls="hand:right">
+            laser-controls="hand: right">
         </a-entity>
 
     </a-entity>
 
-    <!-- VR interaction system -->
 
-    <a-entity vr-interaction-manager></a-entity>
+    <!-- Controller interaction manager -->
+
+    <a-entity quest-interactions></a-entity>
 
 </a-scene>
 
