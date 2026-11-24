@@ -134,25 +134,27 @@ AFRAME.registerComponent('quest-interactions', {
         this.tempQuaternion = new THREE.Quaternion();
         this.tempDirection = new THREE.Vector3();
 
-        this.controllers.left.addEventListener(
-            'gripdown',
-            () => this.startGrab('left')
-        );
+        
+this.controllers.left.addEventListener(
+    'gripbuttondown',
+    () => this.startGrab('left')
+);
 
-        this.controllers.left.addEventListener(
-            'gripup',
-            () => this.stopGrab('left')
-        );
+this.controllers.left.addEventListener(
+    'gripbuttonup',
+    () => this.stopGrab('left')
+);
 
-        this.controllers.right.addEventListener(
-            'gripdown',
-            () => this.startGrab('right')
-        );
+this.controllers.right.addEventListener(
+    'gripbuttondown',
+    () => this.startGrab('right')
+);
 
-        this.controllers.right.addEventListener(
-            'gripup',
-            () => this.stopGrab('right')
-        );
+this.controllers.right.addEventListener(
+    'gripbuttonup',
+    () => this.stopGrab('right')
+);
+
     },
 
 
@@ -461,8 +463,10 @@ AFRAME.registerComponent('quest-interactions', {
     <!-- External temporal bone -->
 
     <a-entity
-        id="externalVR"
-        position="-0.55 1.5 -2.2">
+       
+    id="externalVR"
+    class="vr-target"
+    position="-0.55 1.5 -2.2">
 
         <a-entity
             gltf-model="url(ear_model_1_cleaned.glb)"
@@ -475,8 +479,9 @@ AFRAME.registerComponent('quest-interactions', {
     <!-- Internal temporal bone -->
 
     <a-entity
-        id="internalVR"
-        position="0.55 1.5 -2.2">
+    id="internalVR"
+    class="vr-target"
+    position="0.55 1.5 -2.2">
 
         <a-entity
             gltf-model="url(ear-model-2.glb)"
@@ -508,15 +513,37 @@ AFRAME.registerComponent('quest-interactions', {
             wasd-controls="enabled: false">
         </a-camera>
 
-        <a-entity
-            id="leftHand"
-            laser-controls="hand: left">
-        </a-entity>
+        
+<!-- Left Quest 3 controller -->
+<a-entity
+    id="leftHand"
+    laser-controls="hand: left"
+    raycaster="objects: .vr-target; far: 10; showLine: true"
+    line="color: #42e5ff; opacity: 0.9"
+    cursor="rayOrigin: entity; fuse: false">
 
-        <a-entity
-            id="rightHand"
-            laser-controls="hand: right">
-        </a-entity>
+    <a-sphere
+        radius="0.008"
+        position="0 0 -0.5"
+        material="color: #F4C76B; shader: flat">
+    </a-sphere>
+</a-entity>
+
+<!-- Right Quest 3 controller -->
+<a-entity
+    id="rightHand"
+    laser-controls="hand: right"
+    raycaster="objects: .vr-target; far: 10; showLine: true"
+    line="color: #42e5ff; opacity: 0.9"
+    cursor="rayOrigin: entity; fuse: false">
+
+    <a-sphere
+        radius="0.008"
+        position="0 0 -0.5"
+        material="color: #F4C76B; shader: flat">
+    </a-sphere>
+</a-entity>
+
 
     </a-entity>
 
