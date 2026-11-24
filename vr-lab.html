@@ -42,47 +42,7 @@ body {
 }
 
 body.in-vr #instructions { display: none; }
-body.in-vr #browserControls { display: none; }
 a-scene canvas { touch-action: none; }
-#browserControls {
-    display: contents;
-}
-.browser-panel {
-    position: fixed;
-    z-index: 20;
-    display: flex;
-    gap: 6px;
-    padding: 8px;
-    width: max-content;
-    border: 1px solid rgba(66,229,255,.35);
-    border-radius: 16px;
-    background: rgba(7,28,50,.7);
-}
-#browserTools {
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    flex-direction: column;
-}
-#browserSelection {
-    bottom: 18px;
-    left: 50%;
-    transform: translateX(-50%);
-}
-#browserControls button, #browserControls select {
-    font: inherit;
-    font-size: 14px;
-    min-width: 48px;
-    min-height: 48px;
-    padding: 8px 12px;
-    border: 1px solid rgba(66,229,255,.25);
-    border-radius: 10px;
-    color: #e9faff;
-    background: #06344d;
-    cursor: pointer;
-}
-#browserControls button[aria-pressed="true"] { background: #005777; }
-#browserControls :focus-visible { outline: 2px solid #42e5ff; outline-offset: 2px; }
 
 #instructions h2 {
     margin: 0 0 6px;
@@ -163,8 +123,8 @@ AFRAME.registerComponent('vr-center-model', {
 
 </script>
 <script src="quest-grab.js?v=2"></script>
-<script src="immersive-lab.js?v=3"></script>
-<script src="browser-model-controls.js?v=2"></script>
+<script src="immersive-lab.js?v=4"></script>
+<script src="browser-model-controls.js?v=3"></script>
 </head>
 
 <body>
@@ -173,23 +133,8 @@ AFRAME.registerComponent('vr-center-model', {
 
 <div id="instructions">
     <h2>Temporal Bone Atlas — VR</h2>
-    <p>Point, hold trigger, and drag a model. Enter VR for 3D grabbing.</p>
+    <p>Drag a model to rotate. Enter VR for 3D grabbing.</p>
 </div>
-
-<nav id="browserControls" aria-label="Model manipulation controls">
-    <div id="browserTools" class="browser-panel" role="group" aria-label="Rotation and zoom">
-        <button type="button" data-browser-action="rotate" aria-pressed="true" title="Toggle drag rotation">Rotate</button>
-        <button type="button" data-browser-action="zoom-out" aria-label="Zoom out selected model">−</button>
-        <button type="button" data-browser-action="zoom-in" aria-label="Zoom in selected model">+</button>
-    </div>
-    <div id="browserSelection" class="browser-panel" role="group" aria-label="Model selection and reset">
-        <select id="browserModel" aria-label="Model to manipulate">
-            <option value="externalVR">External</option>
-            <option value="internalVR">Internal</option>
-        </select>
-        <button type="button" data-browser-action="reset">Reset</button>
-    </div>
-</nav>
 
 <!-- Immersive VR scene -->
 

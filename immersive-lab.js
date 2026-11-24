@@ -214,8 +214,6 @@ AFRAME.registerComponent('immersive-lab', {
         });
         this.models.forEach(entity => entity.querySelector('[gltf-model]').classList.toggle(
             'model-hit', labObjectVisible(entity.object3D)));
-        const browser = this.el.components['browser-model-controls'];
-        if (browser) browser.selectVisible();
     },
     reset: function () {
         if (!this.ready) return;

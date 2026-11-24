@@ -38,7 +38,7 @@ Open `vr-lab.html` in Meta Quest Browser and select **Enter VR**. The rounded pa
 
 ### Manipulation in the normal browser window
 
-Outside VR, point at a model and hold the controller trigger while dragging to rotate it. Mouse and touch users can use the same drag gesture. The vertical panel on the right toggles drag rotation with **Rotate** and zooms the selected model with **− / +**. Model selection and Reset remain at the bottom. These controls are hidden in immersive VR, where tracked controller grabbing remains available. Quest Browser's windowed pointer behavior still requires a headset check.
+Outside VR, drag a model to rotate it. The browser preview has no extra manipulation panels, movement, or zoom controls. Enter VR for tracked controller grabbing and distance adjustment.
 
 The shared controller code prevents grabbing through buttons and releases models when controller tracking or session visibility is lost. Actual headset interaction and readability still require device testing.
 
