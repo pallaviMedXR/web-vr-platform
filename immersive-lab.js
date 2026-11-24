@@ -113,7 +113,10 @@ AFRAME.registerComponent('lab-action', {
 });
 
 AFRAME.registerComponent('immersive-lab', {
+    schema: {immersiveOnly: {default: false}},
     init: function () {
+        this.combined = !!(this.data && this.data.immersiveOnly);
+        this.browserView = null;
         this.mode = 'compare';
         this.labels = false;
         this.ready = false;
@@ -129,10 +132,11 @@ AFRAME.registerComponent('immersive-lab', {
             this.models = ['external', 'internal'].map(name => this.el.querySelector('#' + name + 'VR'));
             this.library = this.el.querySelector('#labLibrary');
             this.info = this.el.querySelector('#labAnatomyInfo');
-            this.reset();
+            if (!this.combined) this.reset();
         };
         this.onEnter = () => {
             this.releaseAll();
+            if (this.combined) this.enterImmersiveView();
             this.el.querySelector('a-camera').setAttribute('look-controls', 'enabled', true);
             document.body.classList.add('in-vr');
             this.el.querySelector('#vrOnlyTitle').setAttribute('visible', true);
@@ -146,6 +150,7 @@ AFRAME.registerComponent('immersive-lab', {
             this.releaseAll();
             if (this.session) this.session.removeEventListener('visibilitychange', this.onVisibility);
             this.session = null;
+            if (this.combined) this.restoreBrowserView();
         };
         this.onVisibility = () => {
             if (this.session.visibilityState !== 'visible') this.releaseAll();
@@ -164,7 +169,46 @@ AFRAME.registerComponent('immersive-lab', {
             if (grab) grab.onLost();
         });
     },
+    enterImmersiveView: function () {
+        if (this.browserView) return;
+        this.el.emit('atlas-before-enter');
+        const rig = this.el.querySelector('#cameraRig');
+        const camera = this.el.querySelector('a-camera');
+        const markers = this.el.querySelector('#temporalBoneLabels');
+        this.browserView = {
+            poses: [...this.models, rig, camera].map(entity => ({
+                entity, position: entity.object3D.position.clone(),
+                quaternion: entity.object3D.quaternion.clone(),
+                scale: entity.object3D.scale.clone(), visible: entity.object3D.visible
+            })),
+            markersVisible: markers.object3D.visible
+        };
+        markers.setAttribute('visible', false);
+        rig.object3D.position.set(0, 0, 0);
+        camera.object3D.position.set(0, 1.6, 0);
+        camera.object3D.quaternion.identity();
+        this.el.querySelector('#immersiveEnvironment').setAttribute('visible', true);
+        this.reset();
+    },
+    restoreBrowserView: function () {
+        const environment = this.el.querySelector('#immersiveEnvironment');
+        if (environment) environment.setAttribute('visible', false);
+        this.el.querySelectorAll('.specimen-label').forEach(label => label.setAttribute('visible', false));
+        this.labels = false;
+        if (!this.browserView) return;
+        this.browserView.poses.forEach(saved => {
+            const object = saved.entity.object3D;
+            object.position.copy(saved.position);
+            object.quaternion.copy(saved.quaternion);
+            object.scale.copy(saved.scale);
+            saved.entity.setAttribute('visible', saved.visible);
+        });
+        this.el.querySelector('#temporalBoneLabels').setAttribute('visible', this.browserView.markersVisible);
+        this.browserView = null;
+        this.sync();
+    },
     setView: function (mode) {
+        if (this.combined && !this.el.is('vr-mode')) return;
         if (!this.ready || !['external', 'internal', 'compare'].includes(mode)) return;
         this.releaseAll();
         this.mode = mode;
@@ -188,6 +232,7 @@ AFRAME.registerComponent('immersive-lab', {
         this.sync();
     },
     act: function (action) {
+        if (this.combined && !this.el.is('vr-mode')) return;
         if (!this.ready) return;
         if (['external', 'internal', 'compare'].includes(action)) this.setView(action);
         else if (action === 'models') this.library.setAttribute('visible', !this.library.object3D.visible);
@@ -213,9 +258,10 @@ AFRAME.registerComponent('immersive-lab', {
             if (component) { component.hovered = false; component.paint(); }
         });
         this.models.forEach(entity => entity.querySelector('[gltf-model]').classList.toggle(
-            'model-hit', labObjectVisible(entity.object3D)));
+            'model-hit', (!this.combined || this.el.is('vr-mode')) && labObjectVisible(entity.object3D)));
     },
     reset: function () {
+        if (this.combined && !this.el.is('vr-mode')) return;
         if (!this.ready) return;
         this.labels = false;
         this.el.querySelectorAll('.specimen-label').forEach(label => label.setAttribute('visible', false));
