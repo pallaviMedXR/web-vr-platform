@@ -49,6 +49,33 @@ body {
 
 <script>
 
+// Rounded geometry keeps the interface inside the WebXR scene.
+AFRAME.registerGeometry('rounded-panel', {
+    schema: {
+        width: {default: 1},
+        height: {default: 1},
+        radius: {default: 0.06}
+    },
+    init: function (data) {
+        const x = -data.width / 2;
+        const y = -data.height / 2;
+        const w = data.width;
+        const h = data.height;
+        const r = Math.max(0, Math.min(data.radius, w / 2, h / 2));
+        const shape = new THREE.Shape();
+        shape.moveTo(x + r, y);
+        shape.lineTo(x + w - r, y);
+        shape.quadraticCurveTo(x + w, y, x + w, y + r);
+        shape.lineTo(x + w, y + h - r);
+        shape.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        shape.lineTo(x + r, y + h);
+        shape.quadraticCurveTo(x, y + h, x, y + h - r);
+        shape.lineTo(x, y + r);
+        shape.quadraticCurveTo(x, y, x + r, y);
+        this.geometry = new THREE.ShapeGeometry(shape);
+    }
+});
+
 /* Centre each loaded anatomical model */
 
 AFRAME.registerComponent('vr-center-model', {
@@ -101,8 +128,8 @@ AFRAME.registerComponent('vr-center-model', {
     renderer="antialias: true">
 
     <a-assets>
-        <a-mixin id="lab-panel" material="shader: flat; color: #071c32; opacity: 0.96; transparent: true; side: double"></a-mixin>
-        <a-mixin id="lab-button" material="shader: flat; color: #06344d; side: double"></a-mixin>
+        <a-mixin id="lab-panel" material="shader: flat; color: #071c32; opacity: 0.7; transparent: true; depthWrite: false; side: double"></a-mixin>
+        <a-mixin id="lab-button" material="shader: flat; color: #06344d; opacity: 0.7; transparent: true; depthWrite: false; side: double"></a-mixin>
         <a-mixin id="lab-text" text="color: #e9faff; font: roboto; width: 1; wrapCount: 28"></a-mixin>
     </a-assets>
 
@@ -166,8 +193,8 @@ AFRAME.registerComponent('vr-center-model', {
     </a-entity>
 
     <!-- Static holographic interface. Buttons are visual only in this layout study. -->
-    <a-entity id="labTitle" position="0 2.6 -2.8">
-        <a-plane mixin="lab-panel" width="3.2" height="0.48"></a-plane>
+    <a-entity id="labTitle" position="0 2.95 -3.2">
+        <a-plane geometry="primitive: rounded-panel" mixin="lab-panel" width="3.2" height="0.48"></a-plane>
         <a-text value="TEMPORAL BONE ATLAS" align="center" color="#e9faff"
             width="3.4" position="0 0.08 0.015"></a-text>
         <a-text value="Interactive 3D Anatomy | Holographic Exploration" align="center"
@@ -182,40 +209,40 @@ AFRAME.registerComponent('vr-center-model', {
         color="#b8f3ff" width="1.6" position="0.65 2.08 -2.5"></a-text>
 
     <!-- Left-side toolbar, facing the viewing area. -->
-    <a-entity id="labToolbar" position="-1.9 1.75 -2.8" rotation="0 25 0">
-        <a-plane mixin="lab-panel" width="1.1" height="1.45"></a-plane>
+    <a-entity id="labToolbar" position="-2.4 1.95 -3" rotation="0 25 0">
+        <a-plane geometry="primitive: rounded-panel" mixin="lab-panel" width="1.1" height="1.45"></a-plane>
         <a-text mixin="lab-text" value="LABORATORY" color="#42e5ff"
             align="center" width="1.3" position="0 0.59 0.015"></a-text>
         <a-entity position="0 0.36 0.02">
-            <a-plane mixin="lab-button" width="0.9" height="0.19"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.9" height="0.19"></a-plane>
             <a-text mixin="lab-text" value="Models" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-entity position="0 0.12 0.02">
-            <a-plane mixin="lab-button" width="0.9" height="0.19"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.9" height="0.19"></a-plane>
             <a-text mixin="lab-text" value="Show Labels" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-entity position="0 -0.12 0.02">
-            <a-plane mixin="lab-button" width="0.9" height="0.19"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.9" height="0.19"></a-plane>
             <a-text mixin="lab-text" value="Anatomy Info" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-entity position="0 -0.36 0.02">
-            <a-plane width="0.9" height="0.19" material="shader: flat; color: #005777"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.9" height="0.19" material="color: #005777"></a-plane>
             <a-text mixin="lab-text" value="Compare" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-entity position="0 -0.60 0.02">
-            <a-plane mixin="lab-button" width="0.9" height="0.19"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.9" height="0.19"></a-plane>
             <a-text mixin="lab-text" value="Reset View" align="center" position="0 0 0.01"></a-text>
         </a-entity>
     </a-entity>
 
     <!-- Library stays open so its text and placement can be checked in the headset. -->
-    <a-entity id="labLibrary" position="-1.9 0.49 -2.8" rotation="0 25 0">
-        <a-plane mixin="lab-panel" width="1.1" height="0.95"></a-plane>
+    <a-entity id="labLibrary" position="-2.4 0.55 -3" rotation="0 25 0">
+        <a-plane geometry="primitive: rounded-panel" mixin="lab-panel" width="1.1" height="0.95"></a-plane>
         <a-text mixin="lab-text" value="MODEL LIBRARY" color="#42e5ff"
             align="center" width="1.3" position="0 0.35 0.015"></a-text>
         <a-text mixin="lab-text" value="Head &amp; Neck" color="#b8f3ff"
             position="-0.46 0.19 0.015"></a-text>
-        <a-plane mixin="lab-button" width="0.94" height="0.16" position="0 0.03 0.015"></a-plane>
+        <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.94" height="0.16" position="0 0.03 0.015"></a-plane>
         <a-text mixin="lab-text" value="Temporal Bone - 2 Models" width="0.95"
             align="center" position="0 0.03 0.025"></a-text>
         <a-text mixin="lab-text" value="Central Nervous System\nBrain - Coming soon\n\nCardiovascular System\nHeart - Coming soon"
@@ -223,16 +250,16 @@ AFRAME.registerComponent('vr-center-model', {
     </a-entity>
 
     <!-- Right-side anatomy information, matching the lab's initial external view. -->
-    <a-entity id="labAnatomyInfo" position="1.95 1.55 -2.8" rotation="0 -25 0">
-        <a-plane mixin="lab-panel" width="1.35" height="1.55"></a-plane>
+    <a-entity id="labAnatomyInfo" position="2.4 1.6 -3" rotation="0 -25 0">
+        <a-plane geometry="primitive: rounded-panel" mixin="lab-panel" width="1.35" height="1.55"></a-plane>
         <a-text mixin="lab-text" value="ANATOMY INFORMATION" color="#42e5ff"
             align="center" width="1.45" position="0 0.61 0.015"></a-text>
         <a-entity position="-0.29 0.38 0.02">
-            <a-plane width="0.52" height="0.19" material="shader: flat; color: #005777"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.52" height="0.19" material="color: #005777"></a-plane>
             <a-text mixin="lab-text" value="External" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-entity position="0.29 0.38 0.02">
-            <a-plane mixin="lab-button" width="0.52" height="0.19"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.52" height="0.19"></a-plane>
             <a-text mixin="lab-text" value="Internal" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-text mixin="lab-text" value="Temporal Bone - External View"
@@ -246,18 +273,18 @@ AFRAME.registerComponent('vr-center-model', {
     </a-entity>
 
     <!-- Bottom view selector: no click or grab handlers in this static version. -->
-    <a-entity id="labViewSelector" position="0 0.8 -2.5" rotation="-10 0 0">
-        <a-plane mixin="lab-panel" width="2.65" height="0.4"></a-plane>
+    <a-entity id="labViewSelector" position="0 0.65 -2.65" rotation="-10 0 0">
+        <a-plane geometry="primitive: rounded-panel" mixin="lab-panel" width="2.65" height="0.4"></a-plane>
         <a-entity position="-0.85 0 0.015">
-            <a-plane mixin="lab-button" width="0.77" height="0.25"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.77" height="0.25"></a-plane>
             <a-text mixin="lab-text" value="External" width="1.25" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-entity position="0 0 0.015">
-            <a-plane mixin="lab-button" width="0.77" height="0.25"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.77" height="0.25"></a-plane>
             <a-text mixin="lab-text" value="Internal" width="1.25" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-entity position="0.85 0 0.015">
-            <a-plane width="0.77" height="0.25" material="shader: flat; color: #005777"></a-plane>
+            <a-plane geometry="primitive: rounded-panel" mixin="lab-button" width="0.77" height="0.25" material="color: #005777"></a-plane>
             <a-text mixin="lab-text" value="Compare Both" width="1.2" align="center" position="0 0 0.01"></a-text>
         </a-entity>
         <a-text value="Layout review: buttons and models are static" color="#81cddd"
