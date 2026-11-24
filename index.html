@@ -3,379 +3,289 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Interactive 3D Anatomy Atlas</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spatial Anatomy Atlas — Holographic Laboratory</title>
 <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
 
 <style>
+:root {
+    --accent: #42e5ff;
+    --gold: #F4C76B;
+    --border: rgba(0,216,255,.45);
+}
 * { box-sizing: border-box; }
-
 body {
     margin: 0;
-    background: #101827;
-    color: white;
-    font-family: Arial, sans-serif;
     overflow: hidden;
+    background: #061326;
+    color: #e9faff;
+    font-family: Arial, sans-serif;
 }
-
 button {
-    border: none;
-    border-radius: 8px;
-    color: white;
+    font: inherit;
+    color: inherit;
     cursor: pointer;
-    font-family: inherit;
+    border: 1px solid rgba(0,215,255,.35);
+    border-radius: 8px;
+    background: rgba(0,110,170,.18);
+    padding: 11px 15px;
 }
-
-button:focus-visible {
-    outline: 2px solid #93c5fd;
-    outline-offset: 3px;
+button:hover { background: rgba(0,185,240,.25); }
+button.active {
+    background: rgba(0,170,220,.38);
+    border-color: var(--accent);
+    box-shadow: 0 0 16px rgba(0,220,255,.3);
 }
-
-.header {
+button:focus-visible { outline: 2px solid #a5f3fc; }
+.glass {
+    background: rgba(4,20,40,.88);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    backdrop-filter: blur(16px);
+    box-shadow: 0 0 22px rgba(0,190,255,.1);
+}
+header {
     position: fixed;
-    top: 15px;
+    top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    width: 70%;
+    width: 60%;
+    padding: 14px;
     text-align: center;
     z-index: 100;
     pointer-events: none;
 }
-
-.header h1 { margin: 0; font-size: 28px; }
-.header p { margin-top: 8px; font-size: 14px; color: #94a3b8; }
-
-.model-headings {
+header h1 {
+    margin: 0;
+    font-size: 26px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(0,210,255,.45);
+}
+header p {
+    margin: 8px 0 0;
+    color: #80dfff;
+    font-size: 12px;
+    letter-spacing: 1px;
+}
+#toolbar {
     position: fixed;
-    top: 125px;
+    left: 20px;
+    top: 115px;
+    z-index: 300;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+#toolbar button {
+    min-width: 130px;
+    text-align: left;
+}
+#libraryPanel {
+    display: none;
+    position: fixed;
+    top: 115px;
+    left: 175px;
+    width: 235px;
+    padding: 20px;
+    z-index: 400;
+}
+#libraryPanel h3,
+#anatomyInfo h3 { color: var(--accent); margin-top: 0; }
+#libraryPanel p { color: #9ac5d8; font-size: 13px; }
+#libraryPanel button { width: 100%; text-align: left; }
+#modelTitles {
+    position: fixed;
+    top: 155px;
     left: 0;
     width: 100%;
     display: flex;
     text-align: center;
-    pointer-events: none;
     z-index: 100;
-}
-
-.model-headings > div { width: 50%; }
-.model-headings h2 { font-size: 20px; }
-
-.divider {
-    position: fixed;
-    top: 175px;
-    bottom: 90px;
-    left: 50%;
-    width: 1px;
-    background: rgba(255,255,255,0.18);
     pointer-events: none;
-    z-index: 50;
 }
-
-.library-navigation {
-    position: fixed;
-    top: 20px;
-    left: 20px;
-    z-index: 1000;
+#modelTitles span {
+    width: 50%;
+    color: #b8f3ff;
+    font-size: 15px;
+    font-weight: 600;
 }
-
-#libraryBtn {
-    background: #2563eb;
-    padding: 12px 18px;
-    font-size: 14px;
-}
-
-#libraryPanel {
+#anatomyInfo {
     display: none;
     position: fixed;
-    top: 80px;
-    left: 20px;
-    width: 260px;
-    max-height: 70vh;
-    overflow-y: auto;
-    background: #1e293b;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    z-index: 1000;
-}
-
-#libraryPanel h3 { color: #93c5fd; margin-top: 0; }
-#libraryPanel p { color: #94a3b8; }
-
-.library-model {
-    width: 100%;
-    background: #2563eb;
-    padding: 12px;
-    text-align: left;
-    font-size: 14px;
-}
-
-#anatomyInfo {
-    position: fixed;
-    top: 190px;
     right: 20px;
-    width: 290px;
+    top: 195px;
+    width: 275px;
     max-height: 65vh;
     overflow-y: auto;
-    background: #1e293b;
-    padding: 20px;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-    z-index: 200;
+    padding: 19px;
+    z-index: 500;
 }
-
-#anatomyInfo h3 { margin-top: 0; color: #93c5fd; }
-
-.model-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.model-buttons button { background: #334155; padding: 10px; }
-#model1Btn { background: #2563eb; }
-
-#modelDescription {
-    font-size: 14px;
+#anatomyInfo p,
+#markerInfo p {
+    font-size: 13px;
     line-height: 1.6;
-    color: #cbd5e1;
+    color: #d0e5f0;
 }
-
+#modelButtons { display: flex; gap: 8px; }
+#modelButtons button { font-size: 12px; padding: 9px; }
 #markerInfo {
     display: none;
     position: fixed;
-    top: 190px;
     left: 25%;
+    top: 195px;
     transform: translateX(-50%);
-    width: 280px;
-    max-width: calc(50vw - 24px);
-    background: #1e293b;
-    border: 1px solid #405673;
-    border-radius: 12px;
-    padding: 16px;
-    z-index: 500;
-    box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+    width: 260px;
+    padding: 18px;
+    z-index: 400;
 }
-
-.marker-info-header {
+#markerInfo .head {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
     gap: 10px;
 }
-
-#markerTitle {
-    margin: 0;
-    color: #93c5fd;
-    font-size: 16px;
-    line-height: 1.4;
-}
-
-#markerDescription {
-    margin: 12px 0 0;
-    color: #cbd5e1;
-    font-size: 14px;
-    line-height: 1.6;
-}
-
-#closeMarkerInfo {
-    background: transparent;
-    color: #cbd5e1;
-    font-size: 20px;
-    padding: 0 4px;
-}
-
-#resetButton {
+#markerInfo h4 { color: var(--gold); margin: 0; }
+#markerInfo button { padding: 3px 9px; }
+#bottomBar {
     position: fixed;
-    bottom: 30px;
-    left: 30px;
-    padding: 12px 24px;
-    background: #2563eb;
-    font-size: 16px;
-    z-index: 200;
-}
-
-#toggleLabelsBtn {
-    position: fixed;
-    bottom: 30px;
-    left: 180px;
-    padding: 12px 20px;
-    background: #334155;
-    font-size: 16px;
-    z-index: 200;
-}
-
-.instructions {
-    position: fixed;
-    bottom: 25px;
+    bottom: 22px;
     left: 50%;
     transform: translateX(-50%);
-    background: #1e293b;
-    padding: 12px 24px;
-    border-radius: 10px;
-    font-size: 14px;
-    white-space: nowrap;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    z-index: 300;
+}
+#hint {
+    position: fixed;
+    bottom: 95px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #81cddd;
+    font-size: 12px;
     pointer-events: none;
     z-index: 100;
 }
-
-#pickerOutput {
+#holographicFloor {
     position: fixed;
-    left: 50%;
-    top: 90px;
-    transform: translateX(-50%);
-    z-index: 3000;
-    background: #1e293b;
-    border: 1px solid #405673;
-    border-radius: 10px;
-    padding: 10px 14px;
-    font: 13px monospace;
-    color: #e2e8f0;
-    max-width: 90vw;
+    left: 12%;
+    right: 12%;
+    bottom: 12%;
+    height: 14%;
+    border: 2px solid rgba(0,220,255,.14);
+    border-radius: 50%;
+    box-shadow: 0 0 35px rgba(0,200,255,.12);
     pointer-events: none;
+    z-index: 0;
 }
-
-@media (max-width: 700px) {
-    .header h1 { font-size: 18px; }
-    .model-headings h2 { font-size: 13px; }
-
-    #anatomyInfo {
-        right: 10px;
-        width: 200px;
-        padding: 12px;
+@media(max-width:800px) {
+    header { top: 10px; width: 90%; }
+    header h1 { font-size: 18px; }
+    #toolbar { top: 100px; left: 8px; }
+    #toolbar button {
+        min-width: 85px;
+        font-size: 11px;
+        padding: 8px;
     }
-
-    #markerInfo {
-        top: 185px;
+    #anatomyInfo {
+        right: 8px;
+        top: 240px;
         width: 180px;
         padding: 12px;
     }
-
-    #resetButton {
-        bottom: 15px;
-        left: 10px;
-        padding: 10px;
-        font-size: 12px;
-    }
-
-    #toggleLabelsBtn {
-        bottom: 15px;
-        left: 115px;
-        padding: 10px;
-        font-size: 12px;
-    }
-
-    .instructions { display: none; }
+    #markerInfo { top: 240px; width: 180px; }
+    #modelTitles { top: 130px; }
+    #modelTitles span { font-size: 12px; }
+    #bottomBar { bottom: 10px; }
+    #hint { display: none; }
 }
 </style>
 
 <script>
-// Centre each loaded GLB.
+let activeSpatialMode = 'compare';
+
+// Centre loaded GLB geometry.
 AFRAME.registerComponent('center-model', {
     init: function () {
         this.el.addEventListener('model-loaded', () => {
             const mesh = this.el.getObject3D('mesh');
             if (!mesh) return;
 
+            this.el.object3D.updateMatrixWorld(true);
+
             const box = new THREE.Box3().setFromObject(mesh);
             const center = new THREE.Vector3();
             box.getCenter(center);
 
-            const localCenter = this.el.object3D
-                .worldToLocal(center.clone());
-
-            mesh.position.sub(localCenter);
+            const local = this.el.object3D.worldToLocal(center);
+            mesh.position.sub(local);
         });
     }
 });
 
-// Independent view-relative rotation.
+// View-relative rotation.
 AFRAME.registerComponent('drag-rotate', {
     init: function () {
-        let dragging = false;
-        let previousX = 0;
-        let previousY = 0;
-        let markerPress = false;
-
         const model = this.el.object3D;
-        const rotationSpeed = 0.01;
+        const index = [...document.querySelectorAll('[drag-rotate]')]
+            .indexOf(this.el);
+
+        let dragging = false;
+        let px = 0, py = 0;
         const qx = new THREE.Quaternion();
         const qy = new THREE.Quaternion();
 
-        const models = Array.from(
-            document.querySelectorAll('[drag-rotate]')
-        );
-        const modelIndex = models.indexOf(this.el);
+        this.down = e => {
+            if (e.button !== 0) return;
+            if (e.target.closest(
+                'button,#toolbar,#bottomBar,#anatomyInfo,#markerInfo,#libraryPanel'
+            )) return;
 
-        this.onDown = event => {
-            if (event.target.closest &&
-                event.target.closest(
-                    'button, #anatomyInfo, #markerInfo, #libraryPanel'
-                )) return;
+            const left = e.clientX < innerWidth / 2;
+            const selected = activeSpatialMode === 'compare'
+                ? (index === 0 ? left : !left)
+                : (index === 0
+                    ? activeSpatialMode === 'external'
+                    : activeSpatialMode === 'internal');
 
-            const isLeft = event.clientX < window.innerWidth / 2;
-
-            if ((modelIndex === 0 && isLeft) ||
-                (modelIndex === 1 && !isLeft)) {
-                dragging = true;
-                previousX = event.clientX;
-                previousY = event.clientY;
-
-                markerPress = false;
-                const raycaster = this.el.sceneEl
-                    .querySelector('[raycaster]');
-
-                if (raycaster && raycaster.components.raycaster) {
-                    const intersections =
-                        raycaster.components.raycaster.intersections || [];
-
-                    markerPress = intersections.some(hit =>
-                        hit.object.el &&
-                        hit.object.el.classList &&
-                        hit.object.el.classList.contains('anatomy-label')
-                    );
-                }
-            }
+            if (!selected) return;
+            dragging = true;
+            px = e.clientX;
+            py = e.clientY;
         };
 
-        this.onMove = event => {
-            if (!dragging || markerPress) return;
-
-            const deltaX = event.clientX - previousX;
-            const deltaY = event.clientY - previousY;
+        this.move = e => {
+            if (!dragging) return;
             const camera = this.el.sceneEl.camera;
             if (!camera) return;
 
-            const cameraRight = new THREE.Vector3(1, 0, 0);
-            const cameraUp = new THREE.Vector3(0, 1, 0);
+            const right = new THREE.Vector3(1,0,0)
+                .applyQuaternion(camera.quaternion).normalize();
+            const up = new THREE.Vector3(0,1,0)
+                .applyQuaternion(camera.quaternion).normalize();
 
-            cameraRight.applyQuaternion(camera.quaternion).normalize();
-            cameraUp.applyQuaternion(camera.quaternion).normalize();
-
-            qx.setFromAxisAngle(cameraRight, deltaY * rotationSpeed);
-            qy.setFromAxisAngle(cameraUp, deltaX * rotationSpeed);
+            qx.setFromAxisAngle(right, (e.clientY-py)*.01);
+            qy.setFromAxisAngle(up, (e.clientX-px)*.01);
 
             model.quaternion.premultiply(qx);
             model.quaternion.premultiply(qy);
             model.quaternion.normalize();
 
-            previousX = event.clientX;
-            previousY = event.clientY;
+            px = e.clientX;
+            py = e.clientY;
         };
 
-        this.onUp = () => {
-            dragging = false;
-            markerPress = false;
-        };
+        this.up = () => { dragging = false; };
 
-        window.addEventListener('pointerdown', this.onDown);
-        window.addEventListener('pointermove', this.onMove);
-        window.addEventListener('pointerup', this.onUp);
+        window.addEventListener('pointerdown', this.down);
+        window.addEventListener('pointermove', this.move);
+        window.addEventListener('pointerup', this.up);
     },
-
     remove: function () {
-        window.removeEventListener('pointerdown', this.onDown);
-        window.removeEventListener('pointermove', this.onMove);
-        window.removeEventListener('pointerup', this.onUp);
+        window.removeEventListener('pointerdown', this.down);
+        window.removeEventListener('pointermove', this.move);
+        window.removeEventListener('pointerup', this.up);
     }
 });
 
@@ -383,226 +293,141 @@ AFRAME.registerComponent('drag-rotate', {
 AFRAME.registerComponent('zoom-model', {
     init: function () {
         const model = this.el.object3D;
+        const index = [...document.querySelectorAll('[zoom-model]')]
+            .indexOf(this.el);
 
-        this.onWheel = event => {
-            const models = Array.from(
-                document.querySelectorAll('[zoom-model]')
-            );
+        this.wheel = e => {
+            if (e.target.closest(
+                'button,#toolbar,#bottomBar,#anatomyInfo,#markerInfo,#libraryPanel'
+            )) return;
 
-            const modelIndex = models.indexOf(this.el);
-            const isLeft = event.clientX < window.innerWidth / 2;
-
-            const selected =
-                (modelIndex === 0 && isLeft) ||
-                (modelIndex === 1 && !isLeft);
+            const left = e.clientX < innerWidth / 2;
+            const selected = activeSpatialMode === 'compare'
+                ? (index === 0 ? left : !left)
+                : (index === 0
+                    ? activeSpatialMode === 'external'
+                    : activeSpatialMode === 'internal');
 
             if (!selected) return;
+            e.preventDefault();
 
-            event.preventDefault();
+            const factor = e.deltaY > 0 ? .9 : 1.1;
+            const scale = model.scale.x * factor;
 
-            const factor = event.deltaY > 0 ? 0.9 : 1.1;
-            const newScale = model.scale.x * factor;
-
-            if (newScale >= 0.5 && newScale <= 3) {
-                model.scale.set(newScale, newScale, newScale);
+            if (scale >= .35 && scale <= 3) {
+                model.scale.setScalar(scale);
             }
         };
 
-        window.addEventListener('wheel', this.onWheel, {
+        window.addEventListener('wheel', this.wheel, {
             passive: false
         });
     },
-
     remove: function () {
-        window.removeEventListener('wheel', this.onWheel);
+        window.removeEventListener('wheel', this.wheel);
     }
 });
 
-// Development-only marker coordinate picker.
-// Activate with ?pick in the page URL.
-AFRAME.registerComponent('marker-picker', {
+// Warm-gold dashed marker ring.
+AFRAME.registerComponent('holographic-marker', {
     init: function () {
-        const scene = this.el;
-        const raycaster = new THREE.Raycaster();
-        let start = null;
+        this.ring = new THREE.Group();
+        this.material = new THREE.LineBasicMaterial({
+            color: 0xF4C76B,
+            transparent: true,
+            opacity: .7,
+            depthWrite: false
+        });
 
-        const box = document.createElement('div');
-        box.id = 'pickerOutput';
-        box.textContent =
-            'Picker mode: click a point on the External View bone';
-        document.body.appendChild(box);
+        const segments = 12;
+        const radius = .027;
 
-        const isControl = target =>
-            target.closest &&
-            target.closest(
-                'button, #anatomyInfo, #markerInfo, #libraryPanel'
-            );
+        for (let i = 0; i < segments; i++) {
+            const start = i * Math.PI * 2 / segments;
+            const end = (i + .55) * Math.PI * 2 / segments;
+            const points = [];
 
-        this.onDown = event => {
-            if (event.button !== 0 || isControl(event.target)) {
-                start = null;
-                return;
+            for (let j = 0; j <= 4; j++) {
+                const angle = start + (end-start)*j/4;
+                points.push(new THREE.Vector3(
+                    Math.cos(angle)*radius,
+                    Math.sin(angle)*radius,
+                    0
+                ));
             }
 
-            start = [event.clientX, event.clientY];
-        };
+            const geometry = new THREE.BufferGeometry()
+                .setFromPoints(points);
 
-        this.onUp = event => {
-            if (!start || event.button !== 0) return;
+            this.ring.add(new THREE.Line(
+                geometry, this.material
+            ));
+        }
 
-            const distance = Math.hypot(
-                event.clientX - start[0],
-                event.clientY - start[1]
-            );
-
-            start = null;
-
-            // Ignore drags and clicks on interface controls.
-            if (distance > 5 || isControl(event.target)) return;
-
-            const modelEl = document.querySelector(
-                '[gltf-model="url(ear_model_1_cleaned.glb)"]'
-            );
-
-            const group = document.getElementById(
-                'temporalBoneLabels'
-            );
-
-            const mesh = modelEl && modelEl.getObject3D('mesh');
-
-            if (!mesh || !group || !scene.camera || !scene.canvas) {
-                box.textContent =
-                    'Waiting for the External View model to load';
-                return;
-            }
-
-            // Convert the mouse position into camera coordinates.
-            const rect = scene.canvas.getBoundingClientRect();
-
-            if (
-                event.clientX < rect.left ||
-                event.clientX > rect.right ||
-                event.clientY < rect.top ||
-                event.clientY > rect.bottom
-            ) return;
-
-            const pointer = new THREE.Vector2(
-                ((event.clientX - rect.left) / rect.width) * 2 - 1,
-                -((event.clientY - rect.top) / rect.height) * 2 + 1
-            );
-
-            scene.object3D.updateMatrixWorld(true);
-            scene.camera.updateMatrixWorld(true);
-
-            raycaster.setFromCamera(pointer, scene.camera);
-
-            // Intersect the actual photogrammetry mesh.
-            const hit = raycaster.intersectObject(mesh, true)[0];
-
-            if (!hit) {
-                box.textContent =
-                    'Missed the bone. Click directly on its surface.';
-                return;
-            }
-
-            // Obtain the surface normal in world coordinates.
-            const normal = hit.face.normal.clone()
-                .transformDirection(hit.object.matrixWorld);
-
-            if (normal.dot(raycaster.ray.direction) > 0) {
-                normal.negate();
-            }
-
-            // Lift the marker slightly above the mesh.
-            // 0.005 is in scene units, not calibrated millimetres.
-            const point = hit.point.clone()
-                .addScaledVector(normal, 0.005);
-
-            // Convert world position into marker-group coordinates.
-            const local = group.object3D.worldToLocal(point);
-
-            const result = 'position="' +
-                [local.x, local.y, local.z]
-                    .map(n => n.toFixed(4))
-                    .join(' ') +
-                '"';
-
-            box.textContent = result + ' (copy these coordinates)';
-
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(result).catch(() => {});
-            }
-
-            console.log('Marker picker:', result);
-        };
-
-        window.addEventListener('pointerdown', this.onDown);
-        window.addEventListener('pointerup', this.onUp);
+        this.el.object3D.add(this.ring);
+        this.worldQ = new THREE.Quaternion();
+        this.parentQ = new THREE.Quaternion();
     },
+    tick: function () {
+        const camera = this.el.sceneEl.camera;
+        if (!camera || !this.ring) return;
 
+        camera.getWorldQuaternion(this.worldQ);
+        this.el.object3D.getWorldQuaternion(this.parentQ);
+
+        this.ring.quaternion.copy(
+            this.parentQ.invert().multiply(this.worldQ)
+        );
+    },
     remove: function () {
-        window.removeEventListener('pointerdown', this.onDown);
-        window.removeEventListener('pointerup', this.onUp);
-
-        const box = document.getElementById('pickerOutput');
-        if (box) box.remove();
+        if (!this.ring) return;
+        this.el.object3D.remove(this.ring);
+        this.ring.children.forEach(line => line.geometry.dispose());
+        this.material.dispose();
     }
 });
 </script>
 </head>
 
 <body>
+<div id="holographicFloor"></div>
 
-<!-- Model Library -->
-<div class="library-navigation">
-    <button id="libraryBtn" aria-expanded="false">
-        ☰ Model Library
-    </button>
-</div>
+<header class="glass">
+    <h1>Temporal Bone Atlas</h1>
+    <p>Interactive 3D Anatomy · Holographic Exploration</p>
+</header>
 
-<div id="libraryPanel">
+<nav id="toolbar" class="glass">
+    <button id="libraryBtn">◇ Models</button>
+    <button id="toggleLabelsBtn">⌖ Show Labels</button>
+    <button id="anatomyInfoBtn" aria-expanded="false"
+        aria-controls="anatomyInfo">ⓘ Anatomy Info</button>
+    <button id="compareBtn" class="active">▣ Compare</button>
+    <button id="resetButton">↺ Reset View</button>
+</nav>
+
+<div id="libraryPanel" class="glass">
     <h3>Model Library</h3>
-
     <h4>Head &amp; Neck</h4>
-    <button id="openEarBtn" class="library-model">
-        Temporal Bone — 2 Models
-    </button>
-
+    <button id="openEarBtn">Temporal Bone — 2 Models</button>
     <h4>Central Nervous System</h4>
     <p>Brain — Coming soon</p>
-
     <h4>Cardiovascular System</h4>
     <p>Heart — Coming soon</p>
-
-    <h4>Other Anatomical Models</h4>
-    <p>More models coming soon</p>
 </div>
 
-<!-- Header -->
-<div class="header">
-    <h1>Interactive 3D Anatomy Atlas</h1>
-    <p>Explore anatomical structures in three dimensions</p>
+<div id="modelTitles">
+    <span>External View</span>
+    <span>Internal View</span>
 </div>
 
-<!-- Model headings -->
-<div class="model-headings">
-    <div><h2>Temporal Bone — External View</h2></div>
-    <div><h2>Temporal Bone — Internal View</h2></div>
-</div>
+<a-scene embedded
+    style="position:fixed;inset:0;width:100%;height:100%;z-index:1"
+    renderer="alpha: true"
+    background="transparent: true">
 
-<div class="divider"></div>
-
-<!-- 3D scene -->
-<a-scene
-    embedded
-    style="position:fixed;inset:0;width:100%;height:100%;"
-    background="color: #101827">
-
-    <!-- Model 1: External View -->
-    <a-entity
-        drag-rotate
-        zoom-model
-        position="-1.5 3 -3">
+    <a-entity id="externalModel"
+        drag-rotate zoom-model position="-1.5 3 -3">
 
         <a-entity
             gltf-model="url(ear_model_1_cleaned.glb)"
@@ -610,37 +435,147 @@ AFRAME.registerComponent('marker-picker', {
             center-model>
         </a-entity>
 
-        <!-- Provisional anatomical markers -->
         <a-entity id="temporalBoneLabels">
 
-            <a-sphere
+            <!-- Marker 1: Exposed Endocranial Surface -->
+            <a-entity
                 class="anatomy-label"
-                data-title="Exposed Cranial Surface"
-                data-description="Exposed bony surface of the cranial region. Its precise anatomical boundaries require confirmation."
+                data-title="Exposed Endocranial Surface"
+                data-description="The exposed internal cranial surface of the prepared specimen. Its precise anatomical boundaries require confirmation."
                 position="-0.1485 -0.0183 0.2546"
-                radius="0.01"
-                material="color: blue; shader: flat"
-                visible="false">
-            </a-sphere>
+                visible="false"
+                holographic-marker>
 
-            <a-sphere
+                <a-sphere radius="0.01"
+                    material="shader:flat;color:#F4C76B">
+                </a-sphere>
+
+                <a-sphere class="marker-hitbox"
+                    radius="0.035"
+                    material="shader:flat;transparent:true;opacity:0;depthWrite:false">
+                </a-sphere>
+            </a-entity>
+
+            <!-- Marker 2: Vascular Markings -->
+            <a-entity
                 class="anatomy-label"
                 data-title="Vascular Markings"
-                data-description="Branching vascular markings on the exposed cranial surface. Their precise anatomical identity requires confirmation."
+                data-description="Branching vascular markings visible on the exposed cranial surface. Their specific vascular identity requires confirmation."
                 position="-0.0508 0.2604 0.0151"
-                radius="0.01"
-                material="color: blue; shader: flat"
-                visible="false">
-            </a-sphere>
+                visible="false"
+                holographic-marker>
+
+                <a-sphere radius="0.01"
+                    material="shader:flat;color:#F4C76B">
+                </a-sphere>
+
+                <a-sphere class="marker-hitbox"
+                    radius="0.035"
+                    material="shader:flat;transparent:true;opacity:0;depthWrite:false">
+                </a-sphere>
+            </a-entity>
+
+            <!-- Marker 3: Squamous Part -->
+            <a-entity
+                class="anatomy-label"
+                data-title="Squamous Part of the Temporal Bone"
+                data-description="The broad flattened part of the temporal bone forming part of the lateral skull wall. It gives rise to the zygomatic process."
+                position="0 0 0"
+                visible="false"
+                holographic-marker>
+
+                <a-sphere radius="0.01"
+                    material="shader:flat;color:#F4C76B">
+                </a-sphere>
+
+                <a-sphere class="marker-hitbox"
+                    radius="0.035"
+                    material="shader:flat;transparent:true;opacity:0;depthWrite:false">
+                </a-sphere>
+            </a-entity>
+
+            <!-- Marker 4: Zygomatic Process -->
+            <a-entity
+                class="anatomy-label"
+                data-title="Zygomatic Process"
+                data-description="An anterior projection of the temporal bone that joins the zygomatic bone to form the zygomatic arch."
+                position="0 0 0"
+                visible="false"
+                holographic-marker>
+
+                <a-sphere radius="0.01"
+                    material="shader:flat;color:#F4C76B">
+                </a-sphere>
+
+                <a-sphere class="marker-hitbox"
+                    radius="0.035"
+                    material="shader:flat;transparent:true;opacity:0;depthWrite:false">
+                </a-sphere>
+            </a-entity>
+
+            <!-- Marker 5: External Acoustic Meatus -->
+            <a-entity
+                class="anatomy-label"
+                data-title="External Acoustic Meatus"
+                data-description="The bony opening of the external auditory canal, leading towards the tympanic membrane."
+                position="0 0 0"
+                visible="false"
+                holographic-marker>
+
+                <a-sphere radius="0.01"
+                    material="shader:flat;color:#F4C76B">
+                </a-sphere>
+
+                <a-sphere class="marker-hitbox"
+                    radius="0.035"
+                    material="shader:flat;transparent:true;opacity:0;depthWrite:false">
+                </a-sphere>
+            </a-entity>
+
+            <!-- Marker 6: Mastoid Process -->
+            <a-entity
+                class="anatomy-label"
+                data-title="Mastoid Process"
+                data-description="A projection of the temporal bone situated posterior and inferior to the external acoustic meatus. It provides attachment for several neck muscles."
+                position="0 0 0"
+                visible="false"
+                holographic-marker>
+
+                <a-sphere radius="0.01"
+                    material="shader:flat;color:#F4C76B">
+                </a-sphere>
+
+                <a-sphere class="marker-hitbox"
+                    radius="0.035"
+                    material="shader:flat;transparent:true;opacity:0;depthWrite:false">
+                </a-sphere>
+            </a-entity>
+
+            <!-- Marker 7: Prepared Bony Margin -->
+            <a-entity
+                class="anatomy-label"
+                data-title="Prepared Bony Margin"
+                data-description="The exposed edge of the prepared anatomical specimen. It may reflect sectioning or preparation rather than a natural anatomical boundary."
+                position="0 0 0"
+                visible="false"
+                holographic-marker>
+
+                <a-sphere radius="0.01"
+                    material="shader:flat;color:#F4C76B">
+                </a-sphere>
+
+                <a-sphere class="marker-hitbox"
+                    radius="0.035"
+                    material="shader:flat;transparent:true;opacity:0;depthWrite:false">
+                </a-sphere>
+            </a-entity>
 
         </a-entity>
     </a-entity>
 
-    <!-- Model 2: Internal View -->
-    <a-entity
-        drag-rotate
-        zoom-model
-        position="1.5 3 -3">
+    <!-- Internal model -->
+    <a-entity id="internalModel"
+        drag-rotate zoom-model position="1.5 3 -3">
 
         <a-entity
             gltf-model="url(ear-model-2.glb)"
@@ -649,57 +584,39 @@ AFRAME.registerComponent('marker-picker', {
         </a-entity>
     </a-entity>
 
-    <a-sky color="#101827"></a-sky>
-
-    <!-- Camera and mouse raycaster -->
     <a-entity position="0 1.6 0">
         <a-camera
-            look-controls="enabled: false"
-            wasd-controls="enabled: false">
+            look-controls="enabled:false"
+            wasd-controls="enabled:false">
 
             <a-entity
-                cursor="rayOrigin: mouse"
-                raycaster="objects: .anatomy-label">
+                cursor="rayOrigin:mouse"
+                raycaster="objects:.marker-hitbox">
             </a-entity>
         </a-camera>
     </a-entity>
 </a-scene>
 
-<!-- Viewer controls -->
-<button id="resetButton">Reset View</button>
-<button id="toggleLabelsBtn">Show Labels</button>
-
-<div class="instructions">
-    Click + Drag to Rotate
-    &nbsp;&nbsp; | &nbsp;&nbsp;
-    Scroll to Zoom
-</div>
-
-<!-- Marker information window -->
-<div id="markerInfo" role="dialog"
-     aria-label="Anatomical marker information">
-
-    <div class="marker-info-header">
-        <h4 id="markerTitle">Anatomical Structure</h4>
+<div id="markerInfo" class="glass">
+    <div class="head">
+        <h4 id="markerTitle"></h4>
         <button id="closeMarkerInfo"
-                aria-label="Close anatomical information">
-            ×
-        </button>
+            aria-label="Close marker information">×</button>
     </div>
-
     <p id="markerDescription"></p>
 </div>
 
-<!-- Main Anatomy Information panel -->
-<div id="anatomyInfo">
+<aside id="anatomyInfo" class="glass">
     <h3>Anatomy Information</h3>
 
-    <div class="model-buttons">
-        <button id="model1Btn">External View</button>
-        <button id="model2Btn">Internal View</button>
+    <div id="modelButtons">
+        <button id="model1Btn" class="active">External</button>
+        <button id="model2Btn">Internal</button>
     </div>
 
-    <h4 id="modelInfoTitle">Temporal Bone — External View</h4>
+    <h4 id="modelInfoTitle">
+        Temporal Bone — External View
+    </h4>
 
     <p id="modelDescription">
         The temporal bone forms part of the lateral skull
@@ -707,157 +624,272 @@ AFRAME.registerComponent('marker-picker', {
         temporomandibular joint and houses structures
         associated with hearing and balance.
     </p>
+</aside>
+
+<div id="hint">
+    Drag to rotate · Scroll to zoom · Select markers for details
+</div>
+
+<div id="bottomBar" class="glass">
+    <button id="bottomExternal">External</button>
+    <button id="bottomInternal">Internal</button>
+    <button id="bottomCompare" class="active">
+        Compare Both
+    </button>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+const $ = id => document.getElementById(id);
 
-    const scene = document.querySelector('a-scene');
+const externalModel = $('externalModel');
+const internalModel = $('internalModel');
 
-    // Enable coordinate picking when the URL contains ?pick.
-    if (new URLSearchParams(window.location.search).has('pick')) {
-        scene.setAttribute('marker-picker', '');
+const markers = [...document.querySelectorAll('.anatomy-label')];
+let labelsVisible = false;
+let currentSpatialAnimation = null;
+
+const descriptions = {
+    external:
+        'The temporal bone forms part of the lateral skull and cranial base. It contributes to the temporomandibular joint and houses structures associated with hearing and balance.',
+    internal:
+        'The temporal bone houses structures of the middle and inner ear involved in hearing and equilibrium.'
+};
+
+// Original spatial positions retained.
+const spatialLayouts = {
+    compare: {
+        external: { x:-1.5, y:3, z:-3, scale:1 },
+        internal: { x:1.5, y:3, z:-3, scale:1 }
+    },
+    external: {
+        external: { x:0, y:3, z:-2.6, scale:1.3 },
+        internal: { x:3.5, y:3, z:-4.5, scale:.35 }
+    },
+    internal: {
+        external: { x:-3.5, y:3, z:-4.5, scale:.35 },
+        internal: { x:0, y:3, z:-2.6, scale:1.3 }
+    }
+};
+
+function closeMarker() {
+    $('markerInfo').style.display = 'none';
+}
+
+function selectModel(view) {
+    const external = view === 'external';
+
+    $('modelInfoTitle').textContent =
+        'Temporal Bone — ' +
+        (external ? 'External' : 'Internal') + ' View';
+
+    $('modelDescription').textContent = descriptions[view];
+
+    $('model1Btn').classList.toggle('active', external);
+    $('model2Btn').classList.toggle('active', !external);
+    closeMarker();
+}
+
+function getModelCenterOffset(entity) {
+    const meshEntity = entity.querySelector('[gltf-model]');
+    const mesh = meshEntity && meshEntity.getObject3D('mesh');
+
+    if (!mesh) return new THREE.Vector3();
+
+    entity.object3D.updateMatrixWorld(true);
+
+    const box = new THREE.Box3().setFromObject(mesh);
+    const center = new THREE.Vector3();
+    box.getCenter(center);
+
+    return entity.object3D.worldToLocal(center);
+}
+
+function animateSpatialLayout(mode) {
+    const layout = spatialLayouts[mode];
+    if (!layout) return;
+
+    activeSpatialMode = mode;
+
+    if (currentSpatialAnimation !== null) {
+        cancelAnimationFrame(currentSpatialAnimation);
+        currentSpatialAnimation = null;
     }
 
-    const model1Btn = document.getElementById('model1Btn');
-    const model2Btn = document.getElementById('model2Btn');
-    const modelInfoTitle = document.getElementById('modelInfoTitle');
-    const modelDescription = document.getElementById('modelDescription');
+    const duration = 800;
+    const startTime = performance.now();
 
-    const toggleLabelsBtn =
-        document.getElementById('toggleLabelsBtn');
+    const models = [
+        { element:externalModel, target:layout.external },
+        { element:internalModel, target:layout.internal }
+    ].map(item => {
+        const offset = getModelCenterOffset(item.element);
 
-    const markerInfo = document.getElementById('markerInfo');
-    const markerTitle = document.getElementById('markerTitle');
-    const markerDescription =
-        document.getElementById('markerDescription');
+        return {
+            element: item.element,
+            target: {
+                ...item.target,
+                x: item.target.x - offset.x * item.target.scale,
+                y: item.target.y - offset.y * item.target.scale
+            },
+            startPosition: item.element.object3D.position.clone(),
+            startScale: item.element.object3D.scale.x
+        };
+    });
 
-    const closeMarkerInfo =
-        document.getElementById('closeMarkerInfo');
+    function animate(now) {
+        const progress = Math.min(
+            (now-startTime)/duration, 1
+        );
 
-    const libraryBtn = document.getElementById('libraryBtn');
-    const libraryPanel = document.getElementById('libraryPanel');
+        const eased = progress*progress*(3-2*progress);
 
-    const markers = Array.from(
-        document.querySelectorAll('.anatomy-label')
+        models.forEach(item => {
+            const object = item.element.object3D;
+            const target = item.target;
+
+            object.position.set(
+                THREE.MathUtils.lerp(
+                    item.startPosition.x,target.x,eased
+                ),
+                THREE.MathUtils.lerp(
+                    item.startPosition.y,target.y,eased
+                ),
+                THREE.MathUtils.lerp(
+                    item.startPosition.z,target.z,eased
+                )
+            );
+
+            const scale = THREE.MathUtils.lerp(
+                item.startScale,target.scale,eased
+            );
+
+            object.scale.setScalar(scale);
+        });
+
+        if (progress < 1) {
+            currentSpatialAnimation =
+                requestAnimationFrame(animate);
+        } else {
+            currentSpatialAnimation = null;
+        }
+    }
+
+    currentSpatialAnimation = requestAnimationFrame(animate);
+}
+
+function setButtons(mode) {
+    $('bottomExternal').classList.toggle(
+        'active', mode==='external'
+    );
+    $('bottomInternal').classList.toggle(
+        'active', mode==='internal'
+    );
+    $('bottomCompare').classList.toggle(
+        'active', mode==='compare'
+    );
+    $('compareBtn').classList.toggle(
+        'active', mode==='compare'
+    );
+}
+
+function focus(view) {
+    animateSpatialLayout(view);
+    selectModel(view);
+    setButtons(view);
+}
+
+function compare() {
+    animateSpatialLayout('compare');
+    selectModel('external');
+    setButtons('compare');
+}
+
+function resetView() {
+    [externalModel,internalModel].forEach(model => {
+        model.object3D.quaternion.identity();
+    });
+
+    animateSpatialLayout(activeSpatialMode);
+    closeMarker();
+}
+
+// Show only markers with verified non-placeholder coordinates.
+function toggleLabels() {
+    labelsVisible = !labelsVisible;
+
+    markers.forEach(marker => {
+        const p = marker.getAttribute('position');
+
+        const unplaced =
+            Math.abs(p.x) < .000001 &&
+            Math.abs(p.y) < .000001 &&
+            Math.abs(p.z) < .000001;
+
+        marker.setAttribute(
+            'visible',
+            labelsVisible && !unplaced
+        );
+    });
+
+    $('toggleLabelsBtn').textContent =
+        labelsVisible ? '⌖ Hide Labels' : '⌖ Show Labels';
+
+    $('toggleLabelsBtn').classList.toggle(
+        'active',labelsVisible
     );
 
-    const externalDescription =
-        'The temporal bone forms part of the lateral skull and cranial base. It contributes to the temporomandibular joint and houses structures associated with hearing and balance.';
+    if (!labelsVisible) closeMarker();
+}
 
-    const internalDescription =
-        'The temporal bone houses the middle and inner ear, including the auditory ossicles, cochlea and vestibular apparatus. Its canals transmit important neurovascular structures.';
+markers.forEach(marker => {
+    marker.addEventListener('click', event => {
+        if (!labelsVisible || !marker.object3D.visible) return;
 
-    let labelsVisible = false;
+        event.stopPropagation();
 
-    function closeMarkerWindow() {
-        markerInfo.style.display = 'none';
-    }
+        $('markerTitle').textContent =
+            marker.getAttribute('data-title');
 
-    function selectModel(view) {
-        const external = view === 'external';
+        $('markerDescription').textContent =
+            marker.getAttribute('data-description');
 
-        modelInfoTitle.textContent = external
-            ? 'Temporal Bone — External View'
-            : 'Temporal Bone — Internal View';
-
-        modelDescription.textContent = external
-            ? externalDescription
-            : internalDescription;
-
-        model1Btn.style.background =
-            external ? '#2563eb' : '#334155';
-
-        model2Btn.style.background =
-            external ? '#334155' : '#2563eb';
-
-        closeMarkerWindow();
-    }
-
-    model1Btn.addEventListener('click', () => {
-        selectModel('external');
+        $('markerInfo').style.display = 'block';
     });
-
-    model2Btn.addEventListener('click', () => {
-        selectModel('internal');
-    });
-
-    // Show or hide markers.
-    toggleLabelsBtn.addEventListener('click', function () {
-        labelsVisible = !labelsVisible;
-
-        markers.forEach(marker => {
-            marker.setAttribute('visible', labelsVisible);
-        });
-
-        toggleLabelsBtn.textContent =
-            labelsVisible ? 'Hide Labels' : 'Show Labels';
-
-        toggleLabelsBtn.style.background =
-            labelsVisible ? '#2563eb' : '#334155';
-
-        toggleLabelsBtn.setAttribute(
-            'aria-pressed',
-            String(labelsVisible)
-        );
-
-        if (!labelsVisible) closeMarkerWindow();
-    });
-
-    // Click an anatomical marker to display its information.
-    markers.forEach(marker => {
-        marker.addEventListener('click', function (event) {
-            if (!labelsVisible) return;
-
-            event.stopPropagation();
-
-            markerTitle.textContent =
-                marker.getAttribute('data-title');
-
-            markerDescription.textContent =
-                marker.getAttribute('data-description');
-
-            markerInfo.style.display = 'block';
-        });
-    });
-
-    closeMarkerInfo.addEventListener('click', closeMarkerWindow);
-
-    // Reset both models.
-    document.getElementById('resetButton')
-        .addEventListener('click', function () {
-
-            document.querySelectorAll('[drag-rotate]')
-                .forEach(model => {
-                    model.object3D.rotation.set(0, 0, 0);
-                    model.object3D.scale.set(1, 1, 1);
-                });
-
-            closeMarkerWindow();
-        });
-
-    // Model Library.
-    libraryBtn.addEventListener('click', function () {
-        const isOpen = libraryPanel.style.display === 'block';
-
-        libraryPanel.style.display =
-            isOpen ? 'none' : 'block';
-
-        libraryBtn.setAttribute(
-            'aria-expanded',
-            String(!isOpen)
-        );
-    });
-
-    document.getElementById('openEarBtn')
-        .addEventListener('click', function () {
-
-            libraryPanel.style.display = 'none';
-            libraryBtn.setAttribute('aria-expanded', 'false');
-            selectModel('external');
-        });
 });
-</script>
 
+function toggleAnatomyInfo() {
+    const panel = $('anatomyInfo');
+    const button = $('anatomyInfoBtn');
+    const open = panel.style.display === 'block';
+
+    panel.style.display = open ? 'none' : 'block';
+    button.classList.toggle('active', !open);
+    button.setAttribute('aria-expanded', String(!open));
+}
+
+function toggleLibrary() {
+    const panel = $('libraryPanel');
+    panel.style.display =
+        panel.style.display === 'block' ? 'none' : 'block';
+}
+
+function openEar() {
+    $('libraryPanel').style.display = 'none';
+    focus('external');
+}
+
+$('libraryBtn').addEventListener('click',toggleLibrary);
+$('openEarBtn').addEventListener('click',openEar);
+$('toggleLabelsBtn').addEventListener('click',toggleLabels);
+$('anatomyInfoBtn').addEventListener('click',toggleAnatomyInfo);
+$('resetButton').addEventListener('click',resetView);
+$('closeMarkerInfo').addEventListener('click',closeMarker);
+$('model1Btn').addEventListener('click',()=>focus('external'));
+$('model2Btn').addEventListener('click',()=>focus('internal'));
+$('bottomExternal').addEventListener('click',()=>focus('external'));
+$('bottomInternal').addEventListener('click',()=>focus('internal'));
+$('bottomCompare').addEventListener('click',compare);
+$('compareBtn').addEventListener('click',compare);
+</script>
 </body>
 </html>
